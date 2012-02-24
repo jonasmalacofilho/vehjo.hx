@@ -72,9 +72,9 @@ class IntHashTableTest extends TestCase {
 	public function new( n : Int ) {
 		super();
 		this.n = n;
-		trace( 'Generating keys' );
+		//trace( 'Generating keys' );
 		generate_keys();
-		trace( 'Generating values' );
+		//trace( 'Generating values' );
 		generate_values();
 	}
 	
@@ -90,11 +90,11 @@ class IntHashTableTest extends TestCase {
 			values.push( i );
 	}
 	
-	function generate_table() : Dynamic {
+	function generate_table() : HashTable<Dynamic, Int> {
 		return new IntHashTable();
 	}
 	
-	function generate_ref_table() : Dynamic {
+	function generate_ref_table() : HashTable<Dynamic, Int> {
 		return new IntHash<Int>();
 	}
 	
@@ -109,8 +109,8 @@ class IntHashTableTest extends TestCase {
 		}
 		for ( i in 0...n )
 			assertEquals( r.get( keys[i] ), h.get( keys[i] ) );
-		assertEquals( Lambda.count( r ), h.length );
-		assertTrue( h.load_factor() <= 1 / 2 || h.load_factor() >= 1/8 );
+		assertEquals( Lambda.count( r ), untyped h.length );
+		assertTrue( untyped h.load_factor() <= 1 / 2 || h.load_factor() >= 1/8 );
 		
 		// large removal
 		for ( i in 0...n )
@@ -120,8 +120,8 @@ class IntHashTableTest extends TestCase {
 			}
 		for ( i in 0...n )
 			assertEquals( r.get( keys[i] ), h.get( keys[i] ) );
-		assertEquals( Lambda.count( r ), h.length );
-		assertTrue( h.load_factor() <= 1 / 2 || h.load_factor() >= 1/8 );
+		assertEquals( Lambda.count( r ), untyped h.length );
+		assertTrue( untyped h.load_factor() <= 1 / 2 || h.load_factor() >= 1/8 );
 		
 		// updating	/ reinsertion
 		for ( i in 0...n ) {
@@ -131,8 +131,8 @@ class IntHashTableTest extends TestCase {
 		}
 		for ( i in 0...n )
 			assertEquals( r.get( keys[i] ), h.get( keys[i] ) );
-		assertEquals( Lambda.count( r ), h.length );
-		assertTrue( h.load_factor() <= 1 / 2 || h.load_factor() >= 1/8 );
+		assertEquals( Lambda.count( r ), untyped h.length );
+		assertTrue( untyped h.load_factor() <= 1 / 2 || h.load_factor() >= 1/8 );
 		
 		//trace( h.stats() );
 	}
@@ -176,11 +176,11 @@ class StringHashTableTest extends IntHashTableTest {
 		}
 	}
 	
-	override function generate_table() : Dynamic {
+	override function generate_table() : HashTable<Dynamic, Int> {
 		return new StringHashTable();
 	}
 	
-	override function generate_ref_table() : Dynamic {
+	override function generate_ref_table() : HashTable<Dynamic, Int> {
 		return new Hash<Int>();
 	}
 	

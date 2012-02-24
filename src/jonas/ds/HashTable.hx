@@ -25,160 +25,225 @@ import jonas.MathExtension;
  * SOFTWARE.
  */
 
- /**
-  * Integer keys hash table based on GenericHashTable<K, D>
-  * Randomized hash function
-  */
-class IntHashTable<D> extends GenericHashTable<Int, D> {
-	
-	// word size
-	static inline var w = #if neko 31 #else 32 #end;
-	// odd integer in the range 2^(w-1) < A < 2^w; should not be too close to 2^(w-1) or 2^w
-	var A : Int;
-	// shift
-	var shift : Int;
-	// multiplicative hash function
-	override inline function hash( k : Int ) : Int {
-		return MathExtension.mod2r( ( A * k ) >> shift, r );
-	}
-	// hash function configuration (randomized)
-	override function set_hash_function() : Void {
-		A = Math.round( ( Math.random() * .2 + 1. ) * 1.4 * ( 1 << ( w - 1 ) )  ) | 1; // 1.4 * 2^(w-1) < A < 1.6 * 2^(w-1), odd A
-		shift = w - r;
-	}
-	
+/**
+ * HashTable typedef (so that implementations became interchangeable
+ */
+typedef HashTable<K, D> = {
+	public function exists( k : K ) : Bool;
+	public function get( k : K ) : Null<D>;
+	public function set( k : K, d : D ) : Void;
+	public function remove( k : K ) : Bool;
+	public function iterator() : Iterator<D>;
+	public function keys() : Iterator<K>;
 }
 
 /**
- * String keys hash table based on GenericHashTable<K, D>
- * Randomized hash function
+ * String keys hash table item
  */
-class StringHashTable<D> extends GenericHashTable<String, D> {
+private class StringHashObject<D> {
+	public var k : String;
+	public var d : D;
+	public var h : Int;
+	public inline function new( k, d, h ) {
+		this.k = k;
+		this.d = d;
+		this.h = h;
+	}
+}
+
+/**
+ * String keys hash table
+ * Open addressing, linear probing, randomized hash function
+ */
+class StringHashTable<D> {
+	
+	/** INTERNALS **/
+	
+	// table
+	var t : Array<StringHashObject<D>>;
+	var r : Int;
+	var m : Int; // table size, m = 2^r
+	var m_ : Int; // m - 1, x mod m = x & ( m - 1 )
 	
 	// word size
 	static inline var w = #if neko 31 #else 32 #end;
-	// h( '' )
-	var H0 : Int;
+	
 	// odd integer in the range 2^(w-1) < A < 2^w; should not be too close to 2^(w-1) or 2^w
 	var A : Int;
+	
 	// hash function (horner + multiplicative + simplification)
-	override inline function hash( k : String ) : Int {
-		var h = H0;
+	inline function hash( k : String ) : Int {
+		var h = 0;
 		for ( i in 0...k.length )
 			h = h * A + k.charCodeAt( i );
-		return MathExtension.mod2r( h, r );
+		return h;
 	}
+	
 	// hash function configuration (randomized)
-	override function set_hash_function() : Void {
-		H0 = Std.random( m );
+	function set_hash_function() : Void {
 		A = Math.round( ( Math.random() * .2 + 1. ) * 1.4 * ( 1 << ( w - 1 ) )  ) | 1; // 1.4 * 2^(w-1) < A < 1.6 * 2^(w-1), odd A
 	}
 	
-}
-
-/**
- * Hash table for keys of type K and values of type D template
- * Open addressing schema with linear probing
- */
-class GenericHashTable<K, D> {
-
-	/** STRUCTURE **/
+	// x mod m
+	inline function mod( x : Int ) : Int {
+		return x & m_;
+	}
 	
-	// key storage
-	var key : Array<Null<K>>; 
+	// pow( 2, x )
+	static inline function pow2( x : Int ) : Int {
+		return 1 << x;
+	}
 	
-	// data storage
-	var data : Array<D>;
+	// probing (linear)
+	inline function probe( i : Int ) : Int { 
+		return mod( i + 1 );
+	}
 	
-	// table size: m = 2^r
-	var m : Int;
-	var r : Int;
+	// table allocation
+	function alloc( r : Int ) : Void {
+		this.r = r;
+		m = pow2( r );
+		m_ = m - 1;
+		length = 0;
+		t = [];
+		t[ m_ ] = null;
+	}
 	
-	// hashing
-	function hash( k : K ) : Int { throw ''; return null; }
+	// max & min load factors
+	static inline var MAX_LOAD_FACTOR = 1 / 2;
+	static inline var MIN_LOAD_FACTOR = 1 / 8;
 	
-	// probing, may mess up with key removal
-	function probe( i : Int, p : Int ) : Int { return MathExtension.mod2r( i + 1, r ); }
+	// needed table size
+	static function needed_r( x : Int ) : Int {
+		if ( 0 > x )
+			throw 'Desired size must be positive integer';
+		var r = Math.floor( MathExtension.logb( x / MAX_LOAD_FACTOR, 2. ) ); // m = 2^r, m = 2 * ds
+		if ( x > MathExtension.pow2( r - 1 ) ) // ds > (m=2^r)/2
+			r++;
+		return r;
+	}
+	
+	// default storage capacity
+	inline static var INIT_RESERVE = 4;
+	
+	// init
+	function init( r : Int ) : Void {
+		alloc( r );
+	}
+	
+	// auto size: grow
+	function auto_grow() : Void {
+		if ( MAX_LOAD_FACTOR < load_factor() )
+			resize_r( r + 1 );
+	}
+	
+	// auto size: shrink
+	function auto_shrink() : Void {
+		if ( MIN_LOAD_FACTOR > load_factor() )
+			resize_r( r - 1 );
+	}
+	
+	// resize
+	function resize_r( r : Int ) : Void {
+		if ( 0 > r )
+			return;
+		var oldt = t;
+		var oldm = m;
+		init( r );
+		
+		// reinsertion
+		var x;
+		for ( i in 0...oldm )
+			if ( null != ( x = oldt[i] ) ) {
+				var j = mod( x.h );
+				while ( null != t[j] )
+					j = probe( j );
+				t[j] = x;
+				oldt[i] = null;
+				length++;
+			}
+				
+	}
 	
 	
-	/** BASIC API **/
+	/** HASH TABLE API **/
 	
+	// table size
 	public var length( default, null ) : Int;
 	
-	public function new() {
-		init( calc_r( INIT_RESERVE ) );
+	// constructor
+	public function new( ?reserve : Int = INIT_RESERVE ) {
+		set_hash_function();
+		init( needed_r( reserve ) );
 	}
 	
-	public function resize( size : Int ) : Void {
-		resize_r( calc_r( size ) );
-	}
-	
-	public function exists( k : K ) : Bool {
-		return null != get( k );
-	}
-	
-	public function get( k : K ) : Null<D> {
+	public function exists( k : String ) : Bool {
 		if ( null == k )
 			throw 'Key must not be null';
-		var i = hash( k );
-		var p = 0;
-		var ck;
-		while ( null != ( ck = key[i] ) )
-			if ( ck == k )
-				return data[i];
+		var i = mod( hash( k ) );
+		var x;
+		while ( null != ( x = t[i] ) )
+			if ( x.k == k )
+				return true;
 			else
-				i = probe( i, ++p );
+				i = probe( i );
+		return false;
+	}
+	
+	public function get( k : String ) : Null<D> {
+		if ( null == k )
+			throw 'Key must not be null';
+		var i = mod( hash( k ) );
+		var x;
+		while ( null != ( x = t[i] ) )
+			if ( x.k == k )
+				return x.d;
+			else
+				i = probe( i );
 		return null;
 	}
 	
-	public function set( k : K, d : D ) : Void {
-		if ( null == k )
-			throw 'Key must not be null';
-		var i = hash( k );
-		var p = 0;
-		var ck;
-		while ( null != ( ck = key[i] ) )
-			if ( ck == k ) {
-				length--;
-				break;
-			}
-			else {
-				i = probe( i, ++p );
-				//trace( i );
-			}
-		data[i] = d;
-		key[i] = k;
-		length++;
-		if ( MAX_LOAD_FACTOR < load_factor() )
-			grow();
-	}
-	
-	public function remove( k : K ) : Bool {
+	public function set( k : String, d : D ) : Void {
 		if ( null == k )
 			throw 'Key must not be null';
 		var h = hash( k );
-		var i = h;
-		var p = 0;
-		var ck;
-		while ( null != ( ck = key[i] ) )
-			if ( ck == k ) {
+		var i = mod( h );
+		var x;
+		while ( null != ( x = t[i] ) )
+			if ( x.k == k ) {
 				length--;
-				key[i] = null;
-				data[i] = cast null;
-				while ( null != ( ck = key[i = probe( i, ++p ) ] ) )
-					if ( hash( ck ) != i ) {
-						var d = data[i];
-						length--;
-						key[i] = null;
-						data[i] = cast null;
-						set( ck, d );
+				break;
+			}
+			else
+				i = probe( i );
+		t[i] = new StringHashObject( k, d, h );
+		length++;
+		auto_grow();
+	}
+	
+	public function remove( k : String ) : Bool {
+		if ( null == k )
+			throw 'Key must not be null';
+		var i = mod( hash( k ) );
+		var x;
+		while ( null != ( x = t[i] ) )
+			if ( x.k == k ) {
+				length--;
+				t[i] = null;
+				while ( null != ( x = t[i = probe( i ) ] ) ) {
+					var j;
+					if ( ( j = mod( x.h ) ) != i ) {
+						while ( null != t[j] )
+							j = probe( j );
+						t[j] = x;
+						t[i] = null;
 					}
-				if ( MIN_LOAD_FACTOR > load_factor() )
-					shrink();
+				}
+				auto_shrink();
 				return true;
 			}
 			else
-				i = probe( i, ++p );
+				i = probe( i );
 		return false;
 	}
 	
@@ -187,31 +252,31 @@ class GenericHashTable<K, D> {
 		return {
 			hasNext : function() {
 				for ( j in i...m )
-					if ( null != key[j] ) {
+					if ( null != t[j] ) {
 						i = j;
 						return true;
 					}
 				return false;
 			},
 			next : function() {
-				return data[i++];
+				return t[i++].d;
 			}
 		};
 	}
 	
-	public function keys() : Iterator<K> {
+	public function keys() : Iterator<String> {
 		var i = 0;
 		return {
 			hasNext : function() {
 				for ( j in i...m )
-					if ( null != key[j] ) {
+					if ( null != t[j] ) {
 						i = j;
 						return true;
 					}
 				return false;
 			},
 			next : function() {
-				return key[i++];
+				return t[i++].k;
 			}
 		};
 	}
@@ -219,55 +284,52 @@ class GenericHashTable<K, D> {
 	
 	/** STATS API **/
 	
-	/**
-	 * Load factor
-	 */
-	public inline function load_factor() : Float { return length / m ; }
 	
-	/**
-	 * Expected number of probes on hits (linear probing, Sedgewick)
-	 */
+	// load factor = a = length / m
+	public inline function load_factor() : Float { return length / m; }
+	
+	// expected number of probes on hits (linear probing, Sedgewick)
 	public function expected_probes_hits() : Float { return .5 * ( 1. + 1. / ( 1. - load_factor() ) ); }
 	
-	/**
-	 * Expected number of probes on misses (linear probing, Sedgewick)
-	 */
+	// expected number of probes on misses (linear probing, Sedgewick)
 	public function expected_probes_misses() : Float { return .5 * ( 1. + 1. / Math.pow( 1. - load_factor(), 2. ) ); }
 	
-	/**
-	 * On hits probe stats
-	 */
+	// on hits probe stats
 	public function probes_hits() : { avg : Float, max : Int } {
 		var total_probes = 0.;
 		var max_probes = 0;
-		for ( i in 0...m )
-			if ( null != key[i] ) {
-				var j = hash( key[i] );
+		for ( i in 0...m ) {
+			var x = t[i];
+			if ( null != x ) {
+				var j = mod( x.h );
+				var y;
 				var p = 0;
-				var ck;
-				while ( null != ( ck = key[j] ) )
-					if ( ck == key[i] )
+				while ( null != ( y = t[j] ) )
+					if ( y.k == x.k )
 						break;
-					else
-						j = probe( j, ++p );
+					else {
+						j = probe( j );
+						p++;
+					}
 				total_probes += p + 1;
 				if ( p > max_probes )
 					max_probes = p;
 			}
+		}
 		return { avg : total_probes / length, max : max_probes };
 	}
 	
-	/**
-	 * On misses probe stats
-	 */
+	// on misses probe stats
 	public function probes_misses() : { avg : Float, max : Int } {
 		var total_probes = 0.;
 		var max_probes = 0;
 		for ( i in 0...m ) {
 			var j = i;
 			var p = 0;
-			while ( null != key[j] )
-				j = probe( j, ++p );
+			while ( null != t[j] ) {
+				j = probe( j );
+				p++;
+			}
 			total_probes += p + 1;
 			if ( p > max_probes )
 				max_probes = p;
@@ -275,9 +337,7 @@ class GenericHashTable<K, D> {
 		return { avg : total_probes / m, max : max_probes };
 	}
 	
-	/**
-	 * All stats
-	 */
+	// all stats
 	public function stats() {
 		var hits = probes_hits();
 		var misses = probes_misses();
@@ -294,59 +354,321 @@ class GenericHashTable<K, D> {
 		};
 	}
 	
+}
+
+/**
+ * Integer keys hash table item
+ */
+private class IntHashObject<D> {
+	public var k : Int;
+	public var d : D;
+	public inline function new( k, d ) {
+		this.k = k;
+		this.d = d;
+	}
+}
+
+/**
+ * Integer keys hash table
+ * Open addressing, linear probing, randomized hash function (recreated at resizing)
+ */
+class IntHashTable<D> {
 	
-	/** HELPER API **/
+	/** INTERNALS **/
 	
-	function init( r : Int ) {
-		alloc( r );
-		set_hash_function();
+	// table
+	var t : Array<IntHashObject<D>>;
+	var r : Int;
+	var m : Int; // table size, m = 2^r
+	var m_ : Int; // m - 1, x mod m = x & ( m - 1 )
+	
+	// word size
+	static inline var w = #if neko 31 #else 32 #end;
+	
+	// odd integer in the range 2^(w-1) < A < 2^w; should not be too close to 2^(w-1) or 2^w
+	var A : Int;
+	
+	// shift
+	var shift : Int;
+	
+	// hash function (horner + multiplicative + simplification)
+	inline function hash( k : Int ) : Int {
+		return ( A * k ) >> shift;
 	}
 	
-	function alloc( r : Int ) {
+	// hash function configuration (randomized)
+	function set_hash_function() : Void {
+		A = Math.round( ( Math.random() * .2 + 1. ) * 1.4 * ( 1 << ( w - 1 ) )  ) | 1; // 1.4 * 2^(w-1) < A < 1.6 * 2^(w-1), odd A
+		shift = w - r;
+	}
+	
+	// x mod m
+	inline function mod( x : Int ) : Int {
+		return x & m_;
+	}
+	
+	// pow( 2, x )
+	static inline function pow2( x : Int ) : Int {
+		return 1 << x;
+	}
+	
+	// probing (linear)
+	inline function probe( i : Int ) : Int { 
+		return mod( i + 1 );
+	}
+	
+	// table allocation
+	function alloc( r : Int ) : Void {
 		this.r = r;
-		m = MathExtension.pow2( r ); // 2^r
+		m = pow2( r );
+		m_ = m - 1;
 		length = 0;
-		key = [];
-		key[m - 1] = null;
-		data = [];
-		data[m - 1] = null;
+		t = [];
+		t[ m_ ] = null;
 	}
 	
-	function set_hash_function() : Void { }
+	// max & min load factors
+	static inline var MAX_LOAD_FACTOR = 1 / 2;
+	static inline var MIN_LOAD_FACTOR = 1 / 8;
 	
-	function grow() : Void {
-		resize_r( r + 1 );
-	}
-	
-	function shrink() : Void {
-		resize_r( r - 1 );
-	}
-	
-	function resize_r( nr : Int ) : Void {
-		if ( 0 > nr )
-			return;
-		var key = key;
-		var data = data;
-		var m = m;
-		
-		init( nr );
-		
-		// reinsertion
-		for ( i in 0...m )
-			if ( null != key[i] )
-				set( key[i], data[i] );
-	}
-	
-	static function calc_r( ds : Int ) : Int {
-		if ( 0 > ds )
+	// needed table size
+	static function needed_r( x : Int ) : Int {
+		if ( 0 > x )
 			throw 'Desired size must be positive integer';
-		var r = Math.floor( MathExtension.logb( ds / MAX_LOAD_FACTOR, 2. ) ); // m = 2^r, m = 2 * ds
-		if ( ds > MathExtension.pow2( r - 1 ) ) // ds > (m=2^r)/2
+		var r = Math.floor( MathExtension.logb( x / MAX_LOAD_FACTOR, 2. ) ); // m = 2^r, m = 2 * ds
+		if ( x > MathExtension.pow2( r - 1 ) ) // ds > (m=2^r)/2
 			r++;
 		return r;
 	}
 	
-	static inline var MAX_LOAD_FACTOR = 1 / 2;
-	static inline var MIN_LOAD_FACTOR = 1 / 8;
-	static inline var INIT_RESERVE = 4;
+	// default storage capacity
+	inline static var INIT_RESERVE = 4;
+	
+	// init
+	function init( r : Int ) : Void {
+		alloc( r );
+		set_hash_function();
+	}
+	
+	// auto size: grow
+	function auto_grow() : Void {
+		if ( MAX_LOAD_FACTOR < load_factor() )
+			resize_r( r + 1 );
+	}
+	
+	// auto size: shrink
+	function auto_shrink() : Void {
+		if ( MIN_LOAD_FACTOR > load_factor() )
+			resize_r( r - 1 );
+	}
+	
+	// resize
+	function resize_r( r : Int ) : Void {
+		if ( 0 > r )
+			return;
+		var oldt = t;
+		var oldm = m;
+		init( r );
+		
+		// reinsertion
+		var x;
+		for ( i in 0...oldm )
+			if ( null != ( x = oldt[i] ) ) {
+				var j = mod( hash( x.k ) );
+				while ( null != t[j] )
+					j = probe( j );
+				t[j] = x;
+				oldt[i] = null;
+				length++;
+			}
+				
+	}
+	
+	
+	/** HASH TABLE API **/
+	
+	// table size
+	public var length( default, null ) : Int;
+	
+	// constructor
+	public function new( ?reserve : Int = INIT_RESERVE ) {
+		init( needed_r( reserve ) );
+	}
+	
+	public function exists( k : Int ) : Bool {
+		if ( null == k )
+			throw 'Key must not be null';
+		var i = mod( hash( k ) );
+		var x;
+		while ( null != ( x = t[i] ) )
+			if ( x.k == k )
+				return true;
+			else
+				i = probe( i );
+		return false;
+	}
+	
+	public function get( k : Int ) : Null<D> {
+		if ( null == k )
+			throw 'Key must not be null';
+		var i = mod( hash( k ) );
+		var x;
+		while ( null != ( x = t[i] ) )
+			if ( x.k == k )
+				return x.d;
+			else
+				i = probe( i );
+		return null;
+	}
+	
+	public function set( k : Int, d : D ) : Void {
+		if ( null == k )
+			throw 'Key must not be null';
+		var i = mod( hash( k ) );
+		var x;
+		while ( null != ( x = t[i] ) )
+			if ( x.k == k ) {
+				length--;
+				break;
+			}
+			else
+				i = probe( i );
+		t[i] = new IntHashObject( k, d );
+		length++;
+		auto_grow();
+	}
+	
+	public function remove( k : Int ) : Bool {
+		if ( null == k )
+			throw 'Key must not be null';
+		var i = mod( hash( k ) );
+		var x;
+		while ( null != ( x = t[i] ) )
+			if ( x.k == k ) {
+				length--;
+				t[i] = null;
+				while ( null != ( x = t[i = probe( i ) ] ) ) {
+					var j;
+					if ( ( j = mod( hash( x.k ) ) ) != i ) {
+						while ( null != t[j] )
+							j = probe( j );
+						t[j] = x;
+						t[i] = null;
+					}
+				}
+				auto_shrink();
+				return true;
+			}
+			else
+				i = probe( i );
+		return false;
+	}
+	
+	public function iterator() : Iterator<D> {
+		var i = 0;
+		return {
+			hasNext : function() {
+				for ( j in i...m )
+					if ( null != t[j] ) {
+						i = j;
+						return true;
+					}
+				return false;
+			},
+			next : function() {
+				return t[i++].d;
+			}
+		};
+	}
+	
+	public function keys() : Iterator<Int> {
+		var i = 0;
+		return {
+			hasNext : function() {
+				for ( j in i...m )
+					if ( null != t[j] ) {
+						i = j;
+						return true;
+					}
+				return false;
+			},
+			next : function() {
+				return t[i++].k;
+			}
+		};
+	}
+	
+	
+	/** STATS API **/
+	
+	
+	// load factor = a = length / m
+	public inline function load_factor() : Float { return length / m; }
+	
+	// expected number of probes on hits (linear probing, Sedgewick)
+	public function expected_probes_hits() : Float { return .5 * ( 1. + 1. / ( 1. - load_factor() ) ); }
+	
+	// expected number of probes on misses (linear probing, Sedgewick)
+	public function expected_probes_misses() : Float { return .5 * ( 1. + 1. / Math.pow( 1. - load_factor(), 2. ) ); }
+	
+	// on hits probe stats
+	public function probes_hits() : { avg : Float, max : Int } {
+		var total_probes = 0.;
+		var max_probes = 0;
+		for ( i in 0...m ) {
+			var x = t[i];
+			if ( null != x ) {
+				var j = mod( hash( x.k ) );
+				var y;
+				var p = 0;
+				while ( null != ( y = t[j] ) )
+					if ( y.k == x.k )
+						break;
+					else {
+						j = probe( j );
+						p++;
+					}
+				total_probes += p + 1;
+				if ( p > max_probes )
+					max_probes = p;
+			}
+		}
+		return { avg : total_probes / length, max : max_probes };
+	}
+	
+	// on misses probe stats
+	public function probes_misses() : { avg : Float, max : Int } {
+		var total_probes = 0.;
+		var max_probes = 0;
+		for ( i in 0...m ) {
+			var j = i;
+			var p = 0;
+			while ( null != t[j] ) {
+				j = probe( j );
+				p++;
+			}
+			total_probes += p + 1;
+			if ( p > max_probes )
+				max_probes = p;
+		}
+		return { avg : total_probes / m, max : max_probes };
+	}
+	
+	// all stats
+	public function stats() {
+		var hits = probes_hits();
+		var misses = probes_misses();
+		return {
+			n : length,
+			m : m,
+			alpha : load_factor(),
+			ExpProbesHits : expected_probes_hits(),
+			AvgProbesHits : hits.avg,
+			MaxProbesHits : hits.max,
+			ExpProbesMisses : expected_probes_misses(),
+			AvgProbesMisses : misses.avg,
+			MaxProbesMisses : misses.max
+		};
+	}
+	
 }
