@@ -35,14 +35,18 @@ class Arc {
 	public function new( w ) { this.w = w; _next = null; }
 }
 
-class Digraph<V : Vertex, A : Arc> #if debug extends haxe.unit.TestCase #end {
+class Digraph<V : Vertex, A : Arc>
+#if DIGRAPH_TESTS
+extends haxe.unit.TestCase
+#end
+{
 	
 	var vs : Array<V>;
 	public var nV( default, null ) : Int;
 	public var nA( default, null ) : Int;
 	
 	public function new() {
-		#if debug
+		#if DIGRAPH_TESTS
 		super();
 		#end
 		vs = [];
@@ -52,7 +56,7 @@ class Digraph<V : Vertex, A : Arc> #if debug extends haxe.unit.TestCase #end {
 	
 	public function add_vertex( v : V ) : V {
 		if ( null != v.vi )
-			throw 'Vertex already belongs to another digraph';
+			throw 'v.vi must be null';
 		v.vi = vs.length;
 		vs.push( v );
 		nV++;
@@ -63,27 +67,29 @@ class Digraph<V : Vertex, A : Arc> #if debug extends haxe.unit.TestCase #end {
 		return vs[vi];
 	}
 	
-	public function add_arc( v : V, a : A ) : A {
+	public function add_arc( v : V, a : A, ?unsafe : Bool=false, ?fast : Bool=false ) : A {
 		if ( null != a._next )
-			throw '_next != null';
-		if ( null == v.adj ) {
+			throw 'a._next != null';
+		if ( !unsafe )
+			remove_arc( v, cast a.w );
+		if ( fast ) { // a becames head of v.adj
+			a._next = v.adj;
 			v.adj = a;
-			nA++;
-			return a;
 		}
-		else {
+		else { // a goes to the tail end of v.adj
 			var p = v.adj;
-			while ( true ) {
-				if ( a.w == p.w )
-					return cast p;
-				if ( null == p._next )
-					break;
+			var q = null;
+			while ( null != p ) {
+				q = p;
 				p = p._next;
 			}
-			p._next = a;
-			nA++;
-			return a;
+			if ( null == q )
+				v.adj = a;
+			else
+				q._next = a;
 		}
+		nA++;
+		return a;
 	}
 	
 	public function get_arc( v : V, w : V ) : A {
@@ -96,20 +102,60 @@ class Digraph<V : Vertex, A : Arc> #if debug extends haxe.unit.TestCase #end {
 		return null;
 	}
 	
+	public function remove_arc( v : V, w : V ) : Bool {
+		var p = v.adj;
+		var q = null;
+		while ( null != p ) {
+			if ( w == p.w ) {
+				if ( null == q )
+					v.adj = p._next;
+				else
+					q._next = p._next;
+				nA--;
+				return true;
+			}
+			q = p;
+			p = p._next;
+		}
+		return false;
+	}
+	
 	public function add_edge( v : V, w : V, arc_constructor : V -> V -> A ) : Array<A> {
 		var a1 = add_arc( v, arc_constructor( v, w ) );
 		var a2 = add_arc( w, arc_constructor( w, v ) );
 		return [ a1, a2 ];
 	}
 	
-	#if debug
+	public function show( separator : String ) : String {
+		var b = new StringBuf();
+		b.add( 'number of vertices = ' );
+		b.add( nV );
+		b.add( separator );
+		b.add( 'number of arcs = ' );
+		b.add( nA );
+		for ( v in vs ) {
+			var p = v.adj;
+			while ( null != p ) {
+				b.add( separator );
+				b.add( v.vi );
+				b.add( '-' );
+				b.add( p.w.vi );
+				p = p._next;
+			}
+		}
+		return b.toString();
+	}
+	
+	public function toString() : String { return '{' + show( ', ' ) + '}'; }
+	
+	#if DIGRAPH_TESTS
 	public function test_example() : Void {
 		// construction
 		var d = new Digraph();
 		for ( i in 0...8 )
 			d.add_vertex( new Vertex() );
-		d.add_arc( d.get_vertex( 0 ), new Arc( d.get_vertex( 5 ) ) );
-		d.add_arc( d.get_vertex( 5 ), new Arc( d.get_vertex( 2 ) ) );
+		d.add_arc( d.get_vertex( 0 ), new Arc( d.get_vertex( 5 ) ), true );
+		d.add_arc( d.get_vertex( 5 ), new Arc( d.get_vertex( 2 ) ), true, true );
 		d.add_arc( d.get_vertex( 2 ), new Arc( d.get_vertex( 1 ) ) );
 		d.add_arc( d.get_vertex( 1 ), new Arc( d.get_vertex( 5 ) ) );
 		d.add_arc( d.get_vertex( 5 ), new Arc( d.get_vertex( 7 ) ) );
@@ -121,7 +167,8 @@ class Digraph<V : Vertex, A : Arc> #if debug extends haxe.unit.TestCase #end {
 		d.add_arc( d.get_vertex( 3 ), new Arc( d.get_vertex( 6 ) ) );
 		d.add_arc( d.get_vertex( 6 ), new Arc( d.get_vertex( 4 ) ) );
 		d.add_arc( d.get_vertex( 6 ), new Arc( d.get_vertex( 3 ) ) );
-		
+		d.add_arc( d.get_vertex( 6 ), new Arc( d.get_vertex( 3 ) ) );
+		trace( d );
 		// checking vertices
 		assertEquals( 8, d.nV );
 		for ( i in 0...8 ) {

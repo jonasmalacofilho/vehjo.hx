@@ -68,12 +68,15 @@ class StringHashTable<D> {
 	// word size
 	static inline var w = #if neko 31 #else 32 #end;
 	
+	// h( '' );
+	var H0 : Int;
+	
 	// odd integer in the range 2^(w-1) < A < 2^w; should not be too close to 2^(w-1) or 2^w
 	var A : Int;
 	
 	// hash function (horner + multiplicative + simplification)
 	inline function hash( k : String ) : Int {
-		var h = 0;
+		var h = H0;
 		for ( i in 0...k.length )
 			h = h * A + k.charCodeAt( i );
 		return h;
@@ -82,6 +85,7 @@ class StringHashTable<D> {
 	// hash function configuration (randomized)
 	function set_hash_function() : Void {
 		A = Math.round( ( Math.random() * .2 + 1. ) * 1.4 * ( 1 << ( w - 1 ) )  ) | 1; // 1.4 * 2^(w-1) < A < 1.6 * 2^(w-1), odd A
+		H0 = Std.random( A ) | 1; // 0 < H0 < A, odd H0
 	}
 	
 	// x mod m

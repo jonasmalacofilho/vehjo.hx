@@ -86,7 +86,30 @@ class AnalyzeArcsDigraph<V : AnalyzeArcsVertex, A : AnalyzeArcsArc> extends Digr
 		return t;
 	}
 	
-	#if debug
+	override public function show( separator : String ) : String {
+		var b = new StringBuf();
+		b.add( 'number of vertices = ' );
+		b.add( nV );
+		b.add( separator );
+		b.add( 'number of arcs = ' );
+		b.add( nA );
+		for ( v in vs ) {
+			var p : A = cast v.adj;
+			while ( null != p ) {
+				b.add( separator );
+				b.add( v.vi );
+				b.add( '-' );
+				b.add( p.w.vi );
+				b.add( '(' );
+				b.add( p.type );
+				b.add( ')' );
+				p = cast p._next;
+			}
+		}
+		return b.toString();
+	}
+	
+	#if DIGRAPH_TESTS
 	override public function test_example() : Void {
 		// construction
 		var d = new AnalyzeArcsDigraph();
@@ -109,6 +132,7 @@ class AnalyzeArcsDigraph<V : AnalyzeArcsVertex, A : AnalyzeArcsArc> extends Digr
 		assertEquals( 13, d.nA );
 		
 		d.analyze_arcs();
+		trace( d );
 		
 		// parent, d & f checking
 		var get_vertex_data = function( vi : Int ) {

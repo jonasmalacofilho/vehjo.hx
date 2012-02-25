@@ -29,7 +29,9 @@ class ColoringDigraphVertex extends Vertex {
 	public var color : Int;
 }
 
-class ColoringDigraph<V : ColoringDigraphVertex, A : Arc> extends Digraph<V, A> {
+class ColoringDigraph < V : ColoringDigraphVertex, A : Arc > extends Digraph < V, A > {
+	
+	public var chromatic_number( default, null ) : Int;
 	
 	// O( V ) + O( color_rec ) = O( V + A + V * chromatic_number )
 	public function color() : Int {
@@ -43,6 +45,7 @@ class ColoringDigraph<V : ColoringDigraphVertex, A : Arc> extends Digraph<V, A> 
 			if ( -1 == v.color )
 				max_colors = color_rec( max_colors, v );
 		
+		chromatic_number = max_colors;
 		return max_colors;
 	}
 	
@@ -77,7 +80,41 @@ class ColoringDigraph<V : ColoringDigraphVertex, A : Arc> extends Digraph<V, A> 
 		return max_colors;
 	}
 	
-	#if debug
+	override public function show( separator : String ) : String {
+		var b = new StringBuf();
+		b.add( 'number of vertices = ' );
+		b.add( nV );
+		b.add( separator );
+		b.add( 'number of arcs = ' );
+		b.add( nA );
+		b.add( separator );
+		b.add( 'chromatic number = ' );
+		b.add( chromatic_number );
+		for ( v in vs ) {
+			var p : A = cast v.adj;
+			while ( null != p ) {
+				var w : V = cast p.w;
+				b.add( separator );
+				b.add( v.vi );
+				b.add( '(Color ' );
+				b.add( v.color );
+				b.add( ')' );
+				b.add( '-' );
+				b.add( w.vi );
+				b.add( '(Color ' );
+				b.add( w.color );
+				b.add( ')' );
+				p = cast p._next;
+			}
+		}
+		return b.toString();
+	}
+	
+	#if DIGRAPH_TESTS
+	public inline function check_property( v : V, a : A ) {
+		var w : V = cast a.w;
+		assertFalse( v.color == w.color );
+	}
 	override public function test_example() : Void {
 		// http://en.wikipedia.org/wiki/Greedy_coloring
 		
@@ -147,6 +184,15 @@ class ColoringDigraph<V : ColoringDigraphVertex, A : Arc> extends Digraph<V, A> 
 		// checking
 		assertEquals( 2, d.color() );
 		assertEquals( 2, e.color() );
+		for ( v in vs ) {
+			var p : A = cast v.adj;
+			while ( null != p ) {
+				check_property( v, p );
+				p = cast p._next;
+			}
+		}
+		trace( 'Example, order A: ' + d );
+		trace( 'Example, order B: ' + e );
 		
 	}
 	public function test_Petersen() : Void {
@@ -192,6 +238,14 @@ class ColoringDigraph<V : ColoringDigraphVertex, A : Arc> extends Digraph<V, A> 
 		
 		// checking
 		assertEquals( 3, d.color() );
+		for ( v in vs ) {
+			var p : A = cast v.adj;
+			while ( null != p ) {
+				check_property( v, p );
+				p = cast p._next;
+			}
+		}
+		trace( 'Petersen: ' + d );
 		
 	}
 	#end
