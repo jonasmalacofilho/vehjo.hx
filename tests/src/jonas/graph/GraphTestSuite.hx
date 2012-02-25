@@ -2,7 +2,7 @@ package jonas.graph;
 import haxe.unit.TestRunner;
 
 /*
- * 
+ * Graph test suite
  * Copyright (c) 2012 Jonas Malaco Filho
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,7 +23,6 @@ import haxe.unit.TestRunner;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 
 class GraphTestSuite {
 

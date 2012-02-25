@@ -53,7 +53,7 @@ private class StringHashObject<D> {
 
 /**
  * String keys hash table
- * Open addressing, linear probing, randomized hash function
+ * Open addressing, linear probing, randomized hash function, hash cache
  */
 class StringHashTable<D> {
 	
@@ -374,7 +374,7 @@ private class IntHashObject<D> {
 
 /**
  * Integer keys hash table
- * Open addressing, linear probing, randomized hash function (recreated at resizing)
+ * Open addressing, linear probing, randomized hash function (redefined at resizing)
  */
 class IntHashTable<D> {
 	
