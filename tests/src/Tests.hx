@@ -57,6 +57,7 @@ class Tests {
 		jonas.ds.RjTreeTestSuite.add_tests( t );
 		jonas.ds.queue.PriorityQueueTestSuite.add_tests( t );
 		jonas.ds.queue.SimpleFIFOTestSuite.add_tests( t );
+		jonas.graph.GraphTestSuite.add_tests( t );
 		t.run();
 	}
 	
