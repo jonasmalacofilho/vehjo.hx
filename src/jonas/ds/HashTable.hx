@@ -84,8 +84,13 @@ class StringHashTable<D> {
 	
 	// hash function configuration (randomized)
 	function set_hash_function() : Void {
-		A = Math.round( ( Math.random() * .2 + 1. ) * 1.4 * ( 1 << ( w - 1 ) )  ) | 1; // 1.4 * 2^(w-1) < A < 1.6 * 2^(w-1), odd A
-		H0 = Std.random( A ) | 1; // 0 < H0 < A, odd H0
+		// 2^(w-1) < A < 2^w, odd A, not too close to 2^(w-1) or 2^w
+		A = 1;
+		for ( i in 0...( w - 1 ) )
+			A = ( A << 1 ) | Std.random( 2 );
+		A |= 1;
+		// 0 < H0 < A, odd H0
+		H0 = Std.random( A & MathExtension.INT_MAX ) | 1;
 	}
 	
 	// x mod m
@@ -402,7 +407,11 @@ class IntHashTable<D> {
 	
 	// hash function configuration (randomized)
 	function set_hash_function() : Void {
-		A = Math.round( ( Math.random() * .2 + 1. ) * 1.4 * ( 1 << ( w - 1 ) )  ) | 1; // 1.4 * 2^(w-1) < A < 1.6 * 2^(w-1), odd A
+		// 2^(w-1) < A < 2^w, odd A, not too close to 2^(w-1) or 2^w
+		A = 1;
+		for ( i in 0...( w - 1 ) )
+			A = ( A << 1 ) | Std.random( 2 );
+		A |= 1;
 		shift = w - r;
 	}
 	
