@@ -1,6 +1,7 @@
 package jonas.graph;
 
 import jonas.graph.Digraph;
+import jonas.MathExtension;
 
 /*
  * Configurable (by extension) digraph generator
@@ -74,7 +75,47 @@ class RandomDigraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGener
 	
 }
 
-class PetersenDigraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGenerator<D, V, A> {
+class RandomGraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGenerator<D, V, A> {
+	
+	var nV : Int;
+	var nE : Int;
+	
+	public function new( dg, create_vertex, create_arc, vertices, edges ) {
+		nV = vertices;
+		nE = edges;
+		super( dg, create_vertex, create_arc );
+	}
+	
+	override function assembly() : Void {
+		
+		// vertices
+		var vs = [];
+		for ( i in 0...nV )
+			vs.push( dg.add_vertex( create_vertex() ) );
+		
+		// arcs
+		while ( 2 * dg.nA < nE ) {
+			var v, w;
+			while ( ( v = vs[Std.random( nV )] ) == ( w = vs[Std.random( nV )] ) ) { }
+			dg.add_edge( v, w, create_arc );
+		}
+		
+	}
+	
+}
+
+class PetersenGraph < D : Digraph < V, A > , V : Vertex, A : Arc > extends DigraphGenerator < D, V, A > {
+	
+	public function new( dg, create_vertex, create_arc ) {
+		var nV = 10;
+		var nA = 30;
+		super( dg, create_vertex, create_arc );
+		if ( dg.nV != nV )
+			throw 'Bad construction nV = ' + dg.nV + ' (should be ' + nV + ')';
+		if ( dg.nA != nA )
+			throw 'Bad construction nA = ' + dg.nA + ' (should be ' + nA + ')';
+	}
+	
 	override function assembly() : Void {
 		var vs = [];
 		for ( i in 0...10 )
@@ -109,5 +150,51 @@ class PetersenDigraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGen
 		dg.add_edge( vs[9], vs[4], create_arc );
 		dg.add_edge( vs[9], vs[6], create_arc );
 		dg.add_edge( vs[9], vs[7], create_arc );
+	}
+	
+}
+
+// CrownGraph
+// order == 0 => u0, v0, u1, v1, ..., un, vn
+// order == 1 => u0, u1, ..., un, v0, v1, ..., vn
+class CrownGraph < D : Digraph < V, A > , V : Vertex, A : Arc > extends DigraphGenerator < D, V, A > {
+	
+	var n : Int;
+	var order : Int;
+	
+	public function new( dg, create_vertex, create_arc, n, order = 0 ) {
+		if ( 0 != order && 1 != order )
+			throw '0 <= order <= 1';
+		this.order = order;
+		this.n = n;
+		var nV = 2 * n;
+		var nA = 2 * n * ( n - 1 );
+		super( dg, create_vertex, create_arc );
+		if ( dg.nV != nV )
+			throw 'Bad construction nV = ' + dg.nV + ' (should be ' + nV + ')';
+		if ( dg.nA != nA )
+			throw 'Bad construction nA = ' + dg.nA + ' (should be ' + nA + ')';
+	}
+	
+	override function assembly() : Void {
+		// vertices
+		var us = [];
+		var vs = [];
+		if ( 0 == order )
+			for ( i in 0...n ) {
+				us.push( dg.add_vertex( create_vertex() ) );
+				vs.push( dg.add_vertex( create_vertex() ) );
+			}
+		else {
+			for ( i in 0...n )
+				us.push( dg.add_vertex( create_vertex() ) );
+			for ( i in 0...n )
+				vs.push( dg.add_vertex( create_vertex() ) );
+		}
+		// edges
+		for ( i in 0...n )
+			for ( j in 0...n )
+				if ( i != j )
+					dg.add_edge( us[i], vs[j], create_arc );
 	}
 }

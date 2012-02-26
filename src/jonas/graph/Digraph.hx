@@ -67,7 +67,9 @@ extends haxe.unit.TestCase
 		return vs[vi];
 	}
 	
-	public function add_arc( v : V, a : A, ?unsafe : Bool=false, ?fast : Bool=false ) : A {
+	public function add_arc( v : V, a : A, ?unsafe : Bool = false, ?fast : Bool = false ) : A {
+		if ( v == a.w )
+			throw 'Arcs v-v not allowed';
 		if ( null != a._next )
 			throw 'a._next != null';
 		if ( !unsafe )
@@ -121,8 +123,8 @@ extends haxe.unit.TestCase
 	}
 	
 	public function add_edge( v : V, w : V, arc_constructor : V -> V -> A ) : Array<A> {
-		var a1 = add_arc( v, arc_constructor( v, w ) );
-		var a2 = add_arc( w, arc_constructor( w, v ) );
+		var a1 = add_arc( v, arc_constructor( v, w ), false, false );
+		var a2 = add_arc( w, arc_constructor( w, v ), false, false );
 		return [ a1, a2 ];
 	}
 	
@@ -147,6 +149,21 @@ extends haxe.unit.TestCase
 	}
 	
 	public function toString() : String { return '{' + show( ', ' ) + '}'; }
+	
+	public function is_symmetric() : Bool {
+		var arcs = new Hash();
+		for ( v in vs ) {
+			var p = v.adj;
+			while ( null != p ) {
+				arcs.set( v.vi + '-' + p.w.vi, { v : v, p : p } );
+				p = p._next;
+			}
+		}
+		for ( a in arcs )
+			if ( !arcs.exists( a.p.w.vi + '-' + a.v.vi ) )
+				return false;
+		return true;
+	}
 	
 	#if DIGRAPH_TESTS
 	public function test_example() : Void {

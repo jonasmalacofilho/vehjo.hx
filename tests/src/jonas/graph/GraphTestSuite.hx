@@ -29,7 +29,7 @@ class GraphTestSuite {
 	public static function add_tests( t : TestRunner ) : Void {
 		t.add( new jonas.graph.Digraph() );
 		t.add( new jonas.graph.AnalyzeArcsDigraph() );
-		t.add( new jonas.graph.ColoringDigraph() );
+		t.add( new jonas.graph.ColoringGraph() );
 	}
 	
 }
