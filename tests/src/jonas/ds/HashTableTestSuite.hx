@@ -48,6 +48,9 @@ class HashTableTestSuite {
 		tests.add( new StringHashTableTest( 1 << 10 ) );
 		tests.add( new StringHashTableTest( 1 << 15 ) );
 		//tests.add( new StringHashTableTest( 1 << 20 ) );
+		tests.add( new OtherStringHashTableTest( 1 << 10 ) );
+		tests.add( new OtherStringHashTableTest( 1 << 15 ) );
+		//tests.add( new OtherStringHashTableTest( 1 << 20 ) );
 		tests.add( new LongStringHashTableTest( 1 << 10 ) );
 		tests.add( new LongStringHashTableTest( 1 << 15 ) );
 		//tests.add( new LongStringHashTableTest( 1 << 20 ) );
@@ -197,6 +200,16 @@ class LongStringHashTableTest extends StringHashTableTest {
 			keys.push( b.toString() );
 			//trace( Base16.encode16( keys[i] ) );
 		}
+	}
+	
+}
+
+class OtherStringHashTableTest extends StringHashTableTest {
+	
+	override function generate_keys() {
+		keys = [];
+		for ( i in 0...n )
+			keys.push( Std.string( 0xffffff - Std.random( 0x1ffffff ) ) );
 	}
 	
 }
