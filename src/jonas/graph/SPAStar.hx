@@ -1,5 +1,7 @@
 package jonas.graph;
 
+import jonas.ds.queue.PriorityQueue;
+import jonas.graph.SP;
 import jonas.graph.SPDijkstra;
 
 /*
@@ -38,6 +40,7 @@ class SPAStar<V : SPAStarVertex, A : SPArc> extends SP<V, A> {
 	
 	public function new( heuristic : V -> V -> Float ) {
 		cost_heuristic = heuristic;
+		super();
 	}
 	
 	// A*
