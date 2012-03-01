@@ -30,7 +30,18 @@ class SPDijkstraVertex extends SPVertex {
 	public var _queue_index : Int;
 }
 
-class SPDijkstra<V : SPDijkstraVertex, A : SPArc> extends SP<V, A> {
+class SPDijkstraDigraph<V : SPDijkstraVertex, A : SPArc> extends SPDigraph<V, A> {
+	
+	override public function valid() : Bool {
+		for ( v in vs ) {
+			var p : A = cast v.adj; while ( null != p ) {
+				if ( !Math.isFinite( p.cost ) || 0. > p.cost )
+					return false;
+				p = cast p._next;
+			}
+		}
+		return true;
+	}
 	
 	// Dijkstra
 	function dijkstra( s : V, ? t : V ) : Void {

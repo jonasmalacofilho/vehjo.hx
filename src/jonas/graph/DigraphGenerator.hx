@@ -26,7 +26,6 @@ import jonas.MathExtension;
  * SOFTWARE.
  */
 
-
 class DigraphGenerator<D : Digraph<V, A>, V : Vertex, A : Arc> {
 
 	public var dg( default, null ) : D;

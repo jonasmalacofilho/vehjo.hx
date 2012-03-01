@@ -1,9 +1,9 @@
 package jonas.graph;
 
-import haxe.unit.TestRunner;
+import jonas.graph.Digraph;
 
 /*
- * Graph test suite
+ * Graph: basic graph (simetric digraph)
  * Copyright (c) 2012 Jonas Malaco Filho
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,15 +25,52 @@ import haxe.unit.TestRunner;
  * SOFTWARE.
  */
 
-class GraphTestSuite {
+class GraphVertex extends Vertex {
+	
+	public inline function inbound_degree() : Int {
+		return outbound_degree();
+	}
+	
+	public inline function degree() : Int {
+		return outbound_degree();
+	}
+	
+}
+ 
+class Graph<V : Vertex, A : Arc> extends Digraph<V, A> {
 
-	public static function add_tests( t : TestRunner ) : Void {
-		t.add( new jonas.graph.DigraphTest() );
-		t.add( new jonas.graph.ArcClassificationTest() );
-		t.add( new jonas.graph.DFSColoringTest() );
-		t.add( new jonas.graph.DFSColoringTest.DFSColoringTestPetersen() );
-		t.add( new jonas.graph.DFSColoringTest.DFSColoringTestRandom() );
-		t.add( new jonas.graph.DFSColoringTest.DFSColoringTestCrown() );
+	override public function valid() : Bool {
+		return is_symmetric();
+	}
+	
+	function components_rec( v : Vertex, c : Int, cs : Array<Int> ) : Void {
+		cs[v.vi] = c;
+		var p : A = cast v.adj; while ( null != p ) {
+			if ( -1 == cs[p.w.vi] )
+				components_rec( cast p.w, c, cs );
+			p = cast p._next;
+		}
+	}
+	
+	public function components() : Array<Array<V>> {
+		
+		var cs = [];
+		for ( i in 0...nV )
+			cs.push( -1 );
+		
+		var c = 0;
+		for ( i in 0...nV )
+			if ( -1 == cs[i] )
+				components_rec( cast vs[i], c++, cs );
+		
+		var components = [];
+		for ( i in 0...c )
+			components.push( [] );
+		
+		for ( i in 0...nV )
+			components[cs[i]].push( cast vs[i] );
+		
+		return components;
 	}
 	
 }

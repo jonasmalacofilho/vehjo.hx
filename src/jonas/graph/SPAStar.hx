@@ -31,7 +31,18 @@ class SPAStarVertex extends SPDijkstraVertex {
 	public var estimate : Float;
 }
 
-class SPAStar<V : SPAStarVertex, A : SPArc> extends SP<V, A> {
+class SPAStarDigraph<V : SPAStarVertex, A : SPArc> extends SPDigraph<V, A> {
+	
+	override public function valid() : Bool {
+		for ( v in vs ) {
+			var p : A = cast v.adj; while ( null != p ) {
+				if ( !Math.isFinite( p.cost ) || 0. > p.cost || cost_heuristic( v, cast p.w ) > p.cost )
+					return false;
+				p = cast p._next;
+			}
+		}
+		return true;
+	}
 	
 	// heuristic function
 	dynamic function cost_heuristic( v : V, t : V ) : Float {

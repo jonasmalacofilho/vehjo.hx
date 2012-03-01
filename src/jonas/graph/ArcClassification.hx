@@ -3,7 +3,7 @@ package jonas.graph;
 import jonas.graph.Digraph;
 
 /*
- * Generic shortest path algorithm
+ * Arc classification (DFS)
  * Copyright (c) 2012 Jonas Malaco Filho
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,43 +25,66 @@ import jonas.graph.Digraph;
  * SOFTWARE.
  */
 
-class SPVertex extends Vertex {
-	public var cost : Float;
-	public var parent : SPVertex;
-	override public function toString() : String { return super.toString() + '(parent=' + ( null != parent ? parent.vi : null ) + ',cost=' + cost + ')'; }
+class ArcClassificationVertex extends Vertex {
+	public var d : Int; // discovered
+	public var f : Int; // finished
+	public var parent : ArcClassificationVertex;
 }
 
-class SPArc extends Arc {
-	public var cost : Float;
-	public function new( w, cost ) {
-		this.cost;
-		super( w );
-	}
-	override public function toString() : String { return super.toString() + '(cost=' + cost + ')'; }
+enum ArcType {
+	ArborescenceArc;
+	DescendentArc;
+	ReturnArc;
+	CrossedArc;
 }
 
-class SPDigraph<V : SPVertex, A : SPArc> extends Digraph<V, A> {
-	
-	override public function valid() : Bool {
+class ArcClassificationArc extends Arc {
+	public var type : ArcType;
+	override public function toString() : String { return super.toString() + '(type=' + type + ')'; }
+}
+ 
+class ArcClassificationDigraph<V : ArcClassificationVertex, A : ArcClassificationArc> extends Digraph<V, A> {
+
+	public function analyze_arcs() : Void {
+		// setup
+		var t = 0; // time
+		for ( v in vs ) {
+			v.f = v.d = -1;
+			v.parent = null;
+		}
+		
+		// dfs
+		for ( v in vs )
+			if ( -1 == v.d ) {
+				v.parent = v;
+				t = analyze_arcs_rec( t, v );
+			}
+		
+		// arc classification
 		for ( v in vs ) {
 			var p : A = cast v.adj; while ( null != p ) {
-				if ( !Math.isFinite( p.cost ) )
-					return false;
+				var w : V = cast p.w;
+				if ( v.d < w.d && w.f < v.f )
+					p.type = w.parent == v ? ArborescenceArc : DescendentArc;
+				else
+					p.type = v.f < w.f ? ReturnArc : CrossedArc;
 				p = cast p._next;
 			}
 		}
-		return true;
 	}
 	
-	public function get_path( t : V ) : List<V> {
-		var p = new List();
-		var w = t;
-		while ( w != w.parent ) {
-			p.push( w );
-			w = cast w.parent;
+	function analyze_arcs_rec( t : Int, v : V ) : Int {
+		v.d = t++;
+		var p = v.adj; while ( null != p ) {
+			var w : V = cast p.w;
+			if ( -1 == w.d ) {
+				w.parent = v;
+				t = analyze_arcs_rec( t, w );
+			}
+			p = p._next;
 		}
-		p.push( w );
-		return p;
+		v.f = t++;
+		return t;
 	}
 	
 }

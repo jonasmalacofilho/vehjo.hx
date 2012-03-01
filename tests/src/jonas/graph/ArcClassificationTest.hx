@@ -1,9 +1,9 @@
 package jonas.graph;
 
-import jonas.graph.Digraph;
+import jonas.graph.ArcClassification;
 
 /*
- * Graph: arc classification
+ * This is part of jonas.graph test cases
  * Copyright (c) 2012 Jonas Malaco Filho
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,116 +25,33 @@ import jonas.graph.Digraph;
  * SOFTWARE.
  */
 
-class AnalyzeArcsVertex extends Vertex {
-	public var d : Int; // discovered
-	public var f : Int; // finished
-	public var parent : AnalyzeArcsVertex;
-}
+class ArcClassificationTest extends DigraphTest {
 
-enum ArcType {
-	ArborescenceArc;
-	DescendentArc;
-	ReturnArc;
-	CrossedArc;
-}
-
-class AnalyzeArcsArc extends Arc {
-	public var type : ArcType;
-}
- 
-class AnalyzeArcsDigraph<V : AnalyzeArcsVertex, A : AnalyzeArcsArc> extends Digraph<V, A> {
-
-	public function analyze_arcs() : Void {
-		// setup
-		var t = 0; // time
-		for ( v in vs ) {
-			v.f = v.d = -1;
-			v.parent = null;
-		}
-		
-		// dfs
-		for ( v in vs )
-			if ( -1 == v.d ) {
-				v.parent = v;
-				t = analyze_arcs_rec( t, v );
-			}
-		
-		// arc classification
-		for ( v in vs ) {
-			var p : A = cast v.adj; while ( null != p ) {
-				var w : V = cast p.w;
-				if ( v.d < w.d && w.f < v.f )
-					p.type = w.parent == v ? ArborescenceArc : DescendentArc;
-				else
-					p.type = v.f < w.f ? ReturnArc : CrossedArc;
-				p = cast p._next;
-			}
-		}
-	}
-	
-	function analyze_arcs_rec( t : Int, v : V ) : Int {
-		v.d = t++;
-		var p = v.adj; while ( null != p ) {
-			var w : V = cast p.w;
-			if ( -1 == w.d ) {
-				w.parent = v;
-				t = analyze_arcs_rec( t, w );
-			}
-			p = p._next;
-		}
-		v.f = t++;
-		return t;
-	}
-	
-	override public function show( separator : String ) : String {
-		var b = new StringBuf();
-		b.add( 'number of vertices = ' );
-		b.add( nV );
-		b.add( separator );
-		b.add( 'number of arcs = ' );
-		b.add( nA );
-		for ( v in vs ) {
-			var p : A = cast v.adj;
-			while ( null != p ) {
-				b.add( separator );
-				b.add( v.vi );
-				b.add( '-' );
-				b.add( p.w.vi );
-				b.add( '(' );
-				b.add( p.type );
-				b.add( ')' );
-				p = cast p._next;
-			}
-		}
-		return b.toString();
-	}
-	
-	#if DIGRAPH_TESTS
-	override public function test_example() : Void {
+	override public function test_basic() : Void {
 		// construction
-		var d = new AnalyzeArcsDigraph();
+		var d = new ArcClassificationDigraph();
 		for ( i in 0...8 )
-			d.add_vertex( new AnalyzeArcsVertex() );
-		d.add_arc( d.get_vertex( 0 ), new AnalyzeArcsArc( d.get_vertex( 5 ) ) );
-		d.add_arc( d.get_vertex( 5 ), new AnalyzeArcsArc( d.get_vertex( 2 ) ) );
-		d.add_arc( d.get_vertex( 2 ), new AnalyzeArcsArc( d.get_vertex( 1 ) ) );
-		d.add_arc( d.get_vertex( 1 ), new AnalyzeArcsArc( d.get_vertex( 5 ) ) );
-		d.add_arc( d.get_vertex( 5 ), new AnalyzeArcsArc( d.get_vertex( 7 ) ) );
-		d.add_arc( d.get_vertex( 7 ), new AnalyzeArcsArc( d.get_vertex( 1 ) ) );
-		d.add_arc( d.get_vertex( 0 ), new AnalyzeArcsArc( d.get_vertex( 7 ) ) );
-		d.add_arc( d.get_vertex( 4 ), new AnalyzeArcsArc( d.get_vertex( 0 ) ) );
-		d.add_arc( d.get_vertex( 4 ), new AnalyzeArcsArc( d.get_vertex( 7 ) ) );
-		d.add_arc( d.get_vertex( 3 ), new AnalyzeArcsArc( d.get_vertex( 4 ) ) );
-		d.add_arc( d.get_vertex( 3 ), new AnalyzeArcsArc( d.get_vertex( 6 ) ) );
-		d.add_arc( d.get_vertex( 6 ), new AnalyzeArcsArc( d.get_vertex( 4 ) ) );
-		d.add_arc( d.get_vertex( 6 ), new AnalyzeArcsArc( d.get_vertex( 3 ) ) );
+			d.add_vertex( new ArcClassificationVertex() );
+		d.add_arc( d.get_vertex( 0 ), new ArcClassificationArc( d.get_vertex( 5 ) ) );
+		d.add_arc( d.get_vertex( 5 ), new ArcClassificationArc( d.get_vertex( 2 ) ) );
+		d.add_arc( d.get_vertex( 2 ), new ArcClassificationArc( d.get_vertex( 1 ) ) );
+		d.add_arc( d.get_vertex( 1 ), new ArcClassificationArc( d.get_vertex( 5 ) ) );
+		d.add_arc( d.get_vertex( 5 ), new ArcClassificationArc( d.get_vertex( 7 ) ) );
+		d.add_arc( d.get_vertex( 7 ), new ArcClassificationArc( d.get_vertex( 1 ) ) );
+		d.add_arc( d.get_vertex( 0 ), new ArcClassificationArc( d.get_vertex( 7 ) ) );
+		d.add_arc( d.get_vertex( 4 ), new ArcClassificationArc( d.get_vertex( 0 ) ) );
+		d.add_arc( d.get_vertex( 4 ), new ArcClassificationArc( d.get_vertex( 7 ) ) );
+		d.add_arc( d.get_vertex( 3 ), new ArcClassificationArc( d.get_vertex( 4 ) ) );
+		d.add_arc( d.get_vertex( 3 ), new ArcClassificationArc( d.get_vertex( 6 ) ) );
+		d.add_arc( d.get_vertex( 6 ), new ArcClassificationArc( d.get_vertex( 4 ) ) );
+		d.add_arc( d.get_vertex( 6 ), new ArcClassificationArc( d.get_vertex( 3 ) ) );
 		assertEquals( 8, d.nV );
 		assertEquals( 13, d.nA );
 		
 		d.analyze_arcs();
 		trace( d );
 		
-		// parent, d & f checking
+		// parent, d & f checking (implementation dependent)
 		var get_vertex_data = function( vi : Int ) {
 			var v = d.get_vertex( vi );
 			if ( null == v )
@@ -171,6 +88,5 @@ class AnalyzeArcsDigraph<V : AnalyzeArcsVertex, A : AnalyzeArcsArc> extends Digr
 		assertEquals( CrossedArc, get_arc_type( 4, 7 ) );
 		assertEquals( CrossedArc, get_arc_type( 7, 1 ) );
 	}
-	#end
 	
 }
