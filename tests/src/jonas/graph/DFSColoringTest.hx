@@ -1,10 +1,11 @@
 package jonas.graph;
 
+import jonas.graph.DFSColoring;
 import jonas.graph.Digraph;
 import jonas.graph.DigraphGenerator;
 
 /*
- * Graph: vertex coloring algorithm (in development)
+ * This is part of jonas.graph test cases
  * Copyright (c) 2012 Jonas Malaco Filho
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,106 +26,29 @@ import jonas.graph.DigraphGenerator;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
- 
-class ColoringGraphVertex extends Vertex {
-	public var color : Int;
-}
 
-class ColoringGraph<V : ColoringGraphVertex, A : Arc> extends Digraph<V, A> {
+class DFSColoringTest extends DigraphTest {
 	
-	public var chromatic_number( default, null ) : Int;
-	
-	// O( V ) + O( color_rec ) = O( V + A + V * chromatic_number )
-	public function color() : Int {
-		// setup
-		for ( v in vs )
-			v.color = -1;
-		var max_colors = 0;
-		
-		// dfs
-		for ( v in vs )
-			if ( -1 == v.color )
-				max_colors = color_rec( max_colors, v );
-		
-		chromatic_number = max_colors;
-		return max_colors;
-	}
-	
-	// O( V * chromatic_number + A )
-	function color_rec( max_colors : Int, v : V ) : Int {
-		// color v: smallest free color or a new one
-		var ncs = [];
-		for ( i in 0...max_colors )
-			ncs.push( false );
-		var p = v.adj; while ( null != p ) {
-			var w : V = cast p.w;
-			if ( -1 != w.color )
-				ncs[w.color] = true;
-			p = p._next;
-		}
-		for ( i in 0...ncs.length )
-			if ( !ncs[i] ) {
-				v.color = i;
-				break;
-			}
-		if ( -1 == v.color )
-			v.color = max_colors++;
-		
-		// recurse
-		var p = v.adj; while ( null != p ) {
-			var w : V = cast p.w;
-			if ( -1 == w.color )
-				max_colors = color_rec( max_colors, w );
-			p = p._next;
-		}
-		
-		return max_colors;
-	}
-	
-	override public function show( separator : String ) : String {
-		var b = new StringBuf();
-		b.add( 'number of vertices = ' );
-		b.add( nV );
-		b.add( separator );
-		b.add( 'number of arcs = ' );
-		b.add( nA );
-		b.add( separator );
-		b.add( 'chromatic number = ' );
-		b.add( chromatic_number );
-		for ( v in vs ) {
-			var p : A = cast v.adj;
+	function check_arc_colors( d : DFSColoringGraph<DFSColoringVertex, Arc> ) : Void {
+		for ( v in d.vertices() ) {
+			var p = v.adj;
 			while ( null != p ) {
-				var w : V = cast p.w;
-				b.add( separator );
-				b.add( v.vi );
-				b.add( '(Color ' );
-				b.add( v.color );
-				b.add( ')' );
-				b.add( '-' );
-				b.add( w.vi );
-				b.add( '(Color ' );
-				b.add( w.color );
-				b.add( ')' );
+				var w : DFSColoringVertex = cast p.w;
+				assertFalse( v.color == w.color );
 				p = cast p._next;
 			}
 		}
-		return b.toString();
 	}
 	
-	#if DIGRAPH_TESTS
-	public inline function check_property( v : V, a : A ) {
-		var w : V = cast a.w;
-		assertFalse( v.color == w.color );
-	}
-	override public function test_example() : Void {
-		// http://en.wikipedia.org/wiki/Greedy_coloring
+	override public function test_basic() : Void {
 		
 		// construction
+		// http://en.wikipedia.org/wiki/Greedy_coloring
 		var arc_constructor = function( v, w ) { return new Arc( w ); };
 		// order A
-		var d = new ColoringGraph();
+		var d = new DFSColoringGraph();
 		for ( i in 0...9 )
-			d.add_vertex( new ColoringGraphVertex() );
+			d.add_vertex( new DFSColoringVertex() );
 		d.add_edge( d.get_vertex( 1 ), d.get_vertex( 6 ), arc_constructor );
 		d.add_edge( d.get_vertex( 1 ), d.get_vertex( 7 ), arc_constructor );
 		d.add_edge( d.get_vertex( 1 ), d.get_vertex( 8 ), arc_constructor );
@@ -152,9 +76,9 @@ class ColoringGraph<V : ColoringGraphVertex, A : Arc> extends Digraph<V, A> {
 		assertEquals( 9, d.nV );
 		assertEquals( 24, d.nA );
 		// order B
-		var e = new ColoringGraph();
+		var e = new DFSColoringGraph();
 		for ( i in 0...9 )
-			e.add_vertex( new ColoringGraphVertex() );
+			e.add_vertex( new DFSColoringVertex() );
 		e.add_edge( e.get_vertex( 1 ), e.get_vertex( 4 ), arc_constructor );
 		e.add_edge( e.get_vertex( 1 ), e.get_vertex( 6 ), arc_constructor );
 		e.add_edge( e.get_vertex( 1 ), e.get_vertex( 8 ), arc_constructor );
@@ -182,98 +106,110 @@ class ColoringGraph<V : ColoringGraphVertex, A : Arc> extends Digraph<V, A> {
 		assertEquals( 9, e.nV );
 		assertEquals( 24, e.nA );
 		
-		// checking
-		assertEquals( 2, d.color() );
-		assertEquals( 2, e.color() );
-		for ( v in d.vs ) {
-			var p : A = cast v.adj;
-			while ( null != p ) {
-				check_property( cast v, p );
-				p = cast p._next;
-			}
-		}
+		// testing
+		assertEquals( 2, d.color_v1() );
+		assertEquals( 2, e.color_v1() );
+		check_arc_colors( d );
+		check_arc_colors( e );
 		trace( 'Example digraph, order A: ' + d );
 		trace( 'Example digraph, order B: ' + e );
 		
+		// testing v2
+		assertEquals( 2, d.color_v2() );
+		assertEquals( 2, e.color_v2() );
+		check_arc_colors( d );
+		check_arc_colors( e );
+		trace( 'Example digraph, order A, v2: ' + d );
+		trace( 'Example digraph, order B, v2: ' + e );
+		
 	}
-	public function test_Petersen() : Void {
-		// http://en.wikipedia.org/wiki/Petersen_graph
+	
+}
+
+class DFSColoringTestPetersen extends DFSColoringTest {
+	
+	override public function test_basic() : Void {
 		
 		// construction
-		var vertex_constructor = function() { return new ColoringGraphVertex(); };
+		var vertex_constructor = function() { return new DFSColoringVertex(); };
 		var arc_constructor = function( v, w ) { return new Arc( w ); };
-		var d = new PetersenGraph( new ColoringGraph<ColoringGraphVertex, Arc>(), vertex_constructor, arc_constructor ).dg;
+		var d = new PetersenGraph( new DFSColoringGraph<DFSColoringVertex, Arc>(), vertex_constructor, arc_constructor ).dg;
 		assertEquals( 10, d.nV );
 		assertEquals( 30, d.nA );
 		
-		// checking
-		assertEquals( 3, d.color() );
-		for ( v in d.vs ) {
-			var p : A = cast v.adj;
-			while ( null != p ) {
-				check_property( cast v, p );
-				p = cast p._next;
-			}
-		}
+		// test
+		assertEquals( 3, d.color_v1() );
+		check_arc_colors( d );
 		trace( 'Petersen graph: ' + d );
 		
+		// test v2
+		assertEquals( 3, d.color_v2() );
+		check_arc_colors( d );
+		trace( 'Petersen graph, v2: ' + d );
+		
 	}
-	public function test_Random() : Void {
+	
+}
+
+class DFSColoringTestRandom extends DFSColoringTest {
+
+	override public function test_basic() : Void {
 		
 		// construction
 		var nV = 10000;
 		var nE = 100000;
-		var vertex_constructor = function() { return new ColoringGraphVertex(); };
+		var vertex_constructor = function() { return new DFSColoringVertex(); };
 		var arc_constructor = function( v, w ) { return new Arc( w ); };
-		var d = new RandomGraph( new ColoringGraph<ColoringGraphVertex, Arc>(), vertex_constructor, arc_constructor, nV, nE ).dg;
+		var d = new RandomGraph( new DFSColoringGraph<DFSColoringVertex, Arc>(), vertex_constructor, arc_constructor, nV, nE ).dg;
 		assertEquals( nV, d.nV );
 		assertEquals( nE, 2 * d.nA );
 		
-		// checking
-		d.color();
+		// test
+		var t = d.color_v1();
 		//trace( 'Random digraph: ' + d );
-		for ( v in d.vs ) {
-			var p : A = cast v.adj;
-			while ( null != p ) {
-				check_property( cast v, p );
-				p = cast p._next;
-			}
-		}
-		trace( 'Random digraph: {number of vertices = ' + d.nV + ', number of arcs = ' + d.nA + ', chromatic_number = ' + d.chromatic_number + '}' );
+		check_arc_colors( d );
+		trace( 'Random graph: {number of vertices = ' + d.nV + ', number of arcs = ' + d.nA + ', ncolors = ' + d.ncolors + '}' );
+		
+		// test v2
+		var t2 = d.color_v2();
+		//trace( 'Random digraph: ' + d );
+		check_arc_colors( d );
+		assertTrue( t2 <= t );
+		trace( 'Random graph, v2: {number of vertices = ' + d.nV + ', number of arcs = ' + d.nA + ', ncolors = ' + d.ncolors + '}' );
 		
 	}
-	public function test_Crown() : Void {
-		// http://en.wikipedia.org/wiki/Crown_graph
+	
+}
+
+class DFSColoringTestCrown extends DFSColoringTest {
+
+	override public function test_basic() : Void {
 		
 		// construction
-		var vertex_constructor = function() { return new ColoringGraphVertex(); };
+		var vertex_constructor = function() { return new DFSColoringVertex(); };
 		var arc_constructor = function( v, w ) { return new Arc( w ); };
 		var n = 100;
-		var d = new CrownGraph( new ColoringGraph<ColoringGraphVertex, Arc>(), vertex_constructor, arc_constructor, n, 0 ).dg;
-		var e = new CrownGraph( new ColoringGraph<ColoringGraphVertex, Arc>(), vertex_constructor, arc_constructor, n, 1 ).dg;
+		var d = new CrownGraph( new DFSColoringGraph<DFSColoringVertex, Arc>(), vertex_constructor, arc_constructor, n, 0 ).dg;
+		var e = new CrownGraph( new DFSColoringGraph<DFSColoringVertex, Arc>(), vertex_constructor, arc_constructor, n, 1 ).dg;
 		assertEquals( 2 * n, d.nV );
 		assertEquals( 2 * n * ( n - 1 ), d.nA );
 		
-		// checking
-		assertEquals( 2, d.color() );
-		assertEquals( 2, e.color() );
-		for ( v in d.vs ) {
-			var p : A = cast v.adj;
-			while ( null != p ) {
-				check_property( cast v, p );
-				p = cast p._next;
-			}
-		}
-		for ( v in e.vs ) {
-			var p : A = cast v.adj;
-			while ( null != p ) {
-				check_property( cast v, p );
-				p = cast p._next;
-			}
-		}
-		trace( 'Crown graph, order A: {number of vertices = ' + d.nV + ', number of arcs = ' + d.nA + ', chromatic_number = ' + d.chromatic_number + '}' );
-		trace( 'Crown graph, order B: {number of vertices = ' + e.nV + ', number of arcs = ' + e.nA + ', chromatic_number = ' + e.chromatic_number + '}' );
+		// test
+		assertEquals( 2, d.color_v1() );
+		assertEquals( 2, e.color_v1() );
+		check_arc_colors( d );
+		check_arc_colors( e );
+		trace( 'Crown graph, order A: {number of vertices = ' + d.nV + ', number of arcs = ' + d.nA + ', ncolors = ' + d.ncolors + '}' );
+		trace( 'Crown graph, order B: {number of vertices = ' + e.nV + ', number of arcs = ' + e.nA + ', ncolors = ' + e.ncolors + '}' );
+		
+		// test v2
+		assertEquals( 2, d.color_v2() );
+		assertEquals( 2, e.color_v2() );
+		check_arc_colors( d );
+		check_arc_colors( e );
+		trace( 'Crown graph, order A, v2: {number of vertices = ' + d.nV + ', number of arcs = ' + d.nA + ', ncolors = ' + d.ncolors + '}' );
+		trace( 'Crown graph, order B, v2: {number of vertices = ' + e.nV + ', number of arcs = ' + e.nA + ', ncolors = ' + e.ncolors + '}' );
 		
 	}
-	#end
+	
 }
