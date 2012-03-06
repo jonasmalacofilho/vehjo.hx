@@ -35,7 +35,7 @@ class SPDijkstraDigraph<V : SPDijkstraVertex, A : SPArc> extends SPDigraph<V, A>
 	override public function valid() : Bool {
 		for ( v in vs ) {
 			var p : A = cast v.adj; while ( null != p ) {
-				if ( !Math.isFinite( p.cost ) || 0. > p.cost )
+				if ( !Math.isNaN( p.cost ) && Math.isFinite( p.cost ) && 0. > p.cost )
 					return false;
 				p = cast p._next;
 			}
@@ -44,12 +44,15 @@ class SPDijkstraDigraph<V : SPDijkstraVertex, A : SPArc> extends SPDigraph<V, A>
 	}
 	
 	// Dijkstra
-	function dijkstra( s : V, ? t : V ) : Void {
+	function dijkstra( s : V, ? t : V -> Bool ) : Void {
 		// init
+		var nt = 0;
 		for ( i in 0...nV ) {
 			var v : V = cast vs[i];
 			v.cost = Math.NaN;
 			v.parent = null;
+			if ( null != t && t( v ) )
+				nt++;
 		}
 		s.cost = 0.;
 		s.parent = s;
@@ -61,32 +64,41 @@ class SPDijkstraDigraph<V : SPDijkstraVertex, A : SPArc> extends SPDigraph<V, A>
 		// bfs
 		while ( q.not_empty() ) {
 			var v = q.get();
-			if ( null != t && t == v )
-				break;
-			var p : A = cast v.adj; while ( null != p ) {
-				var w : V = cast p.w;
-				if ( Math.isNaN( w.cost ) ) {
-					w.cost = v.cost + p.cost;
-					w.parent = v;
-					q.put( w );
-				}
-				else if ( w.cost > v.cost + p.cost ) {
-					w.cost = v.cost + p.cost;
-					w.parent = v;
-					q.update( w._queue_index );
+			if ( null != t && t( v ) )
+				if ( 0 >= --nt )
+					break;
+			var p : A = cast v.adj;
+			while ( null != p ) {
+				if ( !Math.isNaN( p.cost ) && Math.isFinite( p.cost ) ) {
+					var w : V = cast p.w;
+					if ( Math.isNaN( w.cost ) ) {
+						w.cost = v.cost + p.cost;
+						w.parent = v;
+						q.put( w );
+					}
+					else if ( w.cost > v.cost + p.cost ) {
+						w.cost = v.cost + p.cost;
+						w.parent = v;
+						q.update( w._queue_index );
+					}
 				}
 				p = cast p._next;
 			}
 		}
 	}
 	
-	// shortest path tree
-	public function compute_tree( s : V ) : Void {
+	// shortest path tree from s
+	override public function compute_tree( s : V ) : Void {
 		dijkstra( s );
 	}
 	
-	// shortest path
-	public function compute_path( s : V, t : V ) : Void {
+	// shortest path from s to t
+	override public function compute_path( s : V, t : V ) : Void {
+		dijkstra( s, function( v : V ) { return v == t; } );
+	}
+	
+	// shortest paths from s to t( v ) == true
+	override public function compute_paths( s : V, t : V -> Bool ) : Void {
 		dijkstra( s, t );
 	}
 	

@@ -28,31 +28,40 @@ import jonas.graph.Digraph;
 class SPVertex extends Vertex {
 	public var cost : Float;
 	public var parent : SPVertex;
-	override public function toString() : String { return super.toString() + '(parent=' + ( null != parent ? parent.vi : null ) + ',cost=' + cost + ')'; }
+	override public function toString() : String { return super.toString() + '(parent=' + ( null != parent ? parent.vi : null ) + ', cost=' + cost + ')'; }
 }
 
 class SPArc extends Arc {
 	public var cost : Float;
 	public function new( w, cost ) {
-		this.cost;
+		this.cost = cost;
 		super( w );
 	}
-	override public function toString() : String { return super.toString() + '(cost=' + cost + ')'; }
+	override public function toString() : String { return super.toString() + '(arc cost=' + cost + ')'; }
 }
 
 class SPDigraph<V : SPVertex, A : SPArc> extends Digraph<V, A> {
 	
 	override public function valid() : Bool {
-		for ( v in vs ) {
-			var p : A = cast v.adj; while ( null != p ) {
-				if ( !Math.isFinite( p.cost ) )
-					return false;
-				p = cast p._next;
-			}
-		}
 		return true;
 	}
 	
+	// shortest path tree from s
+	public function compute_tree( s : V ) : Void {
+		throw 'Not implemented';
+	}
+	
+	// shortest path from s to t
+	public function compute_path( s : V, t : V ) : Void {
+		throw 'Not implemented';
+	}
+	
+	// shortest paths from s to t( v ) == true
+	public function compute_paths( s : V, t : V -> Bool ) : Void {
+		throw 'Not implemented';
+	}
+	
+	// path reconstruction
 	public function get_path( t : V ) : List<V> {
 		var p = new List();
 		var w = t;

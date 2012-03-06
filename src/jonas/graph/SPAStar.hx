@@ -36,7 +36,7 @@ class SPAStarDigraph<V : SPAStarVertex, A : SPArc> extends SPDigraph<V, A> {
 	override public function valid() : Bool {
 		for ( v in vs ) {
 			var p : A = cast v.adj; while ( null != p ) {
-				if ( !Math.isFinite( p.cost ) || 0. > p.cost || cost_heuristic( v, cast p.w ) > p.cost )
+				if ( !Math.isNaN( p.cost ) && Math.isFinite( p.cost ) && ( 0. > p.cost || cost_heuristic( v, cast p.w ) > p.cost ) )
 					return false;
 				p = cast p._next;
 			}
@@ -75,18 +75,20 @@ class SPAStarDigraph<V : SPAStarVertex, A : SPArc> extends SPDigraph<V, A> {
 			if ( t == v )
 				break;
 			var p : A = cast v.adj; while ( null != p ) {
-				var w : V = cast p.w;
-				if ( Math.isNaN( w.cost ) ) {
-					w.cost = v.cost + p.cost;
-					w.estimate = w.cost + cost_heuristic( w, t );
-					w.parent = v;
-					q.put( w );
-				}
-				else if ( w.cost > v.cost + p.cost ) {
-					w.cost = v.cost + p.cost;
-					w.estimate = w.cost + cost_heuristic( w, t );
-					w.parent = v;
-					q.update( w._queue_index );
+				if ( !Math.isNaN( p.cost ) && Math.isFinite( p.cost ) ) {
+					var w : V = cast p.w;
+					if ( Math.isNaN( w.cost ) ) {
+						w.cost = v.cost + p.cost;
+						w.estimate = w.cost + cost_heuristic( w, t );
+						w.parent = v;
+						q.put( w );
+					}
+					else if ( w.cost > v.cost + p.cost ) {
+						w.cost = v.cost + p.cost;
+						w.estimate = w.cost + cost_heuristic( w, t );
+						w.parent = v;
+						q.update( w._queue_index );
+					}
 				}
 				p = cast p._next;
 			}
@@ -94,7 +96,7 @@ class SPAStarDigraph<V : SPAStarVertex, A : SPArc> extends SPDigraph<V, A> {
 	}
 	
 	// shortest path
-	public function compute_path( s : V, t : V ) : Void {
+	override public function compute_path( s : V, t : V ) : Void {
 		a_star( s, t );
 	}
 	
