@@ -36,4 +36,7 @@ class BoxedIterable<T> {
 	
 	public inline function iterator() : Iterator<T> { return it(); }
 	
+	// cleanear version, use with the "using" mixin
+	public static inline function iterable<A>( x : Void -> Iterator<A> ) { return { iterator : x }; }
+	
 }
