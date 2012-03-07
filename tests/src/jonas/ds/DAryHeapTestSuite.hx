@@ -40,7 +40,8 @@ class DAryHeapTestSuite {
 	
 	public static function add_tests( t : TestRunner ) {
 		for ( a in 2...33 )
-			test_arity( t, a );
+			if ( a % 2 == 0 )
+				test_arity( t, a );
 	}
 	
 	static function test_arity( t : TestRunner, arity : Int ) {
@@ -85,8 +86,9 @@ class MaxHeapTests extends TestCase {
 	}
 	
 	function insert_from_array( a : Array<Int> ) : Void {
-		for ( x in a )
-			h.put( x );
+		//for ( x in a )
+			//h.put( x );
+		h.build( a );
 	}
 	
 	function random_values( n : Int, min : Int, max : Int ) : Array<Int> {
@@ -112,19 +114,22 @@ class MaxHeapTests extends TestCase {
 	}
 	
 	public function test_basic() : Void {
-		DAryHeapTestSuite.report( 'test_basic with arity=' + arity + ' took ' + StopWatch.time( tbasic ) + ' seconds' );
+		DAryHeapTestSuite.report( 'test_basic with arity=' + arity + ' took ' + tbasic() + ' seconds' );
 	}
 	
-	function tbasic() : Void {
+	function tbasic() : Float {
 		var s = 1000;
 		init( s );
 		var vs = random_values( s, -1500, 1500 );
 		insert_from_array( vs );
 		//trace( h );
-		compare_results( sort_by_predicate( vs ) );
+		var ref = sort_by_predicate( vs );
+		var t1 = StopWatch.time( callback( compare_results, ref ) );
 		vs = random_values( s, -232023, 1008302 );
 		insert_from_array( vs );
-		compare_results( sort_by_predicate( vs ) );
+		ref = sort_by_predicate( vs );
+		var t2 = StopWatch.time( callback( compare_results, ref ) );
+		return .5 * ( t1 + t2 );
 	}
 	
 }

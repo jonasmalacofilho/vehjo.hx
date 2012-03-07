@@ -35,7 +35,7 @@ class DAryHeap<T> {
 	
 	public var arity( default, null ) : Int;
 	public var length( default, null ) : Int;
-	var h : Array<T>; // [ null, 1, 11, 12, 13, 14, 111, 112, 113, 114, 121, 122, 123, 124, ... ]
+	var h : Array<T>; // [ 1, 11, 12, 13, 14, 111, 112, 113, 114, 121, 122, 123, 124, ... ]
 	
 	/** Rebindble functions **/
 	
@@ -58,13 +58,19 @@ class DAryHeap<T> {
 		this.reserve( reserve );
 	}
 	
+	public function build( a : Iterable<T> ) : Void {
+		if ( 0 != length )
+			throw 'Heap is not empty, cannot build from iterable';
+		h = Lambda.array( a );
+		length = h.length;
+		heapify();
+	}
+	
 	public static function from_array<A>( a : Array<A>, predicate : A -> A -> Bool, ?update_index : A -> Int -> Void, arity = DEFAULT_ARITY ) : DAryHeap<A> {
 		var h = new DAryHeap( arity, 0 );
 		h.predicate = predicate;
 		if ( null != update_index ) h.update_index = update_index;
-		h.h = a.copy();
-		h.length = a.length;
-		h.heapify();
+		h.build( a );
 		return h;
 	}
 	
@@ -138,6 +144,7 @@ class DAryHeap<T> {
 		update_index( e, i );
 	}
 	
+	// 1 <= n <= arity
 	inline function child( i : Int, n : Int ) : Int {
 		return arity * i + n;
 	}
@@ -179,6 +186,8 @@ class DAryHeap<T> {
 	
 	function heapify() : Void {
 		var s = Math.floor( parent( length - 1 ) );
+		for ( i in 0...length )
+			update_index( h[i], i );
 		while ( 0 <= s )
 			fix_down( s-- );
 	}
