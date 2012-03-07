@@ -53,9 +53,7 @@ private class SortingHeap<T> extends DAryHeap<T> {
 	public function new( a : Iterable<T>, predicate : T -> T -> Bool, arity : Int ) {
 		super( arity, 0 );
 		this.predicate = predicate;
-		h = Lambda.array( a );
-		length = h.length;
-		heapify();
+		build( a );
 	}
 	
 	public function sort() : Array<T> {
