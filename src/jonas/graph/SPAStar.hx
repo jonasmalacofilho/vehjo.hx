@@ -41,7 +41,7 @@ class SPAStarDigraph<V : SPAStarVertex, A : SPArc> extends SPDigraph<V, A> {
 				p = cast p._next;
 			}
 		}
-		return true;
+		return super.valid();
 	}
 	
 	// heuristic function
@@ -96,7 +96,7 @@ class SPAStarDigraph<V : SPAStarVertex, A : SPArc> extends SPDigraph<V, A> {
 	}
 	
 	// shortest path
-	override public function compute_path( s : V, t : V ) : Void {
+	override public function compute_shortest_path( s : V, t : V ) : Void {
 		a_star( s, t );
 	}
 	

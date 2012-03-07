@@ -1,6 +1,7 @@
 package jonas.graph;
 
 import jonas.graph.Digraph;
+import jonas.graph.PathExistance;
 
 /*
  * Generic shortest path algorithm
@@ -25,9 +26,8 @@ import jonas.graph.Digraph;
  * SOFTWARE.
  */
 
-class SPVertex extends Vertex {
+class SPVertex extends PathExistanceVertex {
 	public var cost : Float;
-	public var parent : SPVertex;
 	override public function toString() : String { return super.toString() + '(parent=' + ( null != parent ? parent.vi : null ) + ', cost=' + cost + ')'; }
 }
 
@@ -40,37 +40,21 @@ class SPArc extends Arc {
 	override public function toString() : String { return super.toString() + '(arc cost=' + cost + ')'; }
 }
 
-class SPDigraph<V : SPVertex, A : SPArc> extends Digraph<V, A> {
-	
-	override public function valid() : Bool {
-		return true;
-	}
+class SPDigraph<V : SPVertex, A : SPArc> extends PathExistanceDigraph<V, A> {
 	
 	// shortest path tree from s
-	public function compute_tree( s : V ) : Void {
+	public function compute_spt( s : V ) : Void {
 		throw 'Not implemented';
 	}
 	
 	// shortest path from s to t
-	public function compute_path( s : V, t : V ) : Void {
+	public function compute_shortest_path( s : V, t : V ) : Void {
 		throw 'Not implemented';
 	}
 	
 	// shortest paths from s to t( v ) == true
-	public function compute_paths( s : V, t : V -> Bool ) : Void {
+	public function compute_shortest_paths( s : V, t : V -> Bool ) : Void {
 		throw 'Not implemented';
-	}
-	
-	// path reconstruction
-	public function get_path( t : V ) : List<V> {
-		var p = new List();
-		var w = t;
-		while ( w != w.parent ) {
-			p.push( w );
-			w = cast w.parent;
-		}
-		p.push( w );
-		return p;
 	}
 	
 }

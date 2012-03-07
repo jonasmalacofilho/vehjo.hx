@@ -40,10 +40,10 @@ class SPDijkstraDigraph<V : SPDijkstraVertex, A : SPArc> extends SPDigraph<V, A>
 				p = cast p._next;
 			}
 		}
-		return true;
+		return super.valid();
 	}
 	
-	// Dijkstra
+	// Dijkstra algorithm
 	function dijkstra( s : V, ? t : V -> Bool ) : Void {
 		// init
 		var nt = 0;
@@ -88,18 +88,22 @@ class SPDijkstraDigraph<V : SPDijkstraVertex, A : SPArc> extends SPDigraph<V, A>
 	}
 	
 	// shortest path tree from s
-	override public function compute_tree( s : V ) : Void {
+	override public function compute_spt( s : V ) : Void {
+		check_has_vertex( s );
 		dijkstra( s );
 	}
 	
 	// shortest path from s to t
-	override public function compute_path( s : V, t : V ) : Void {
+	override public function compute_shortest_path( s : V, t : V ) : Void {
+		check_has_vertex( s );
+		check_has_vertex( t );
 		dijkstra( s, function( v : V ) { return v == t; } );
 	}
 	
 	// shortest paths from s to t( v ) == true
-	override public function compute_paths( s : V, t : V -> Bool ) : Void {
-		dijkstra( s, t );
+	override public function compute_shortest_paths( s : V, ts : V -> Bool ) : Void {
+		check_has_vertex( s );
+		dijkstra( s, ts );
 	}
 	
 }
