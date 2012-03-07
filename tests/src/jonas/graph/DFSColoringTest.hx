@@ -162,7 +162,8 @@ class DFSColoringTestRandom extends DFSColoringTest {
 		var arc_constructor = function( v, w ) { return new Arc( w ); };
 		var d = new RandomGraph( new DFSColoringGraph<DFSColoringVertex, Arc>(), vertex_constructor, arc_constructor, nV, nE ).dg;
 		assertEquals( nV, d.nV );
-		assertEquals( nE, 2 * d.nA );
+		assertEquals( 0, d.nA % 2 );
+		assertEquals( nE, Math.floor( d.nA / 2 ) );
 		
 		// test
 		var t = d.color_v1();

@@ -34,6 +34,8 @@ class GraphTestSuite {
 		t.add( new jonas.graph.DFSColoringTest.DFSColoringTestPetersen() );
 		t.add( new jonas.graph.DFSColoringTest.DFSColoringTestRandom() );
 		t.add( new jonas.graph.DFSColoringTest.DFSColoringTestCrown() );
+		t.add( new jonas.graph.SPDijkstraTest() );
+		t.add( new jonas.graph.SPAStarTest() );
 	}
 	
 }

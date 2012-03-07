@@ -1,8 +1,6 @@
 package jonas.graph;
 
 import jonas.graph.Digraph;
-import jonas.MathExtension;
-
 /*
  * Configurable (by extension) digraph generator
  * Copyright (c) 2012 Jonas Malaco Filho
@@ -32,7 +30,7 @@ class DigraphGenerator<D : Digraph<V, A>, V : Vertex, A : Arc> {
 	var create_vertex : Void -> V;
 	var create_arc : V -> V -> A;
 
-	public function new( dg, create_vertex, create_arc ) {
+	public function new( dg : D, create_vertex : Void -> V, create_arc : V -> V -> A ) {
 		this.dg = dg;
 		this.create_vertex = create_vertex;
 		this.create_arc = create_arc;
@@ -40,7 +38,7 @@ class DigraphGenerator<D : Digraph<V, A>, V : Vertex, A : Arc> {
 	}
 	
 	public function assembly() : Void {
-		
+		throw 'Not implemented';
 	}
 	
 }
@@ -54,6 +52,10 @@ class RandomDigraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGener
 		nV = vertices;
 		nA = arcs;
 		super( dg, create_vertex, create_arc );
+		if ( dg.nV != nV )
+			throw 'Bad construction nV = ' + dg.nV + ' (should be ' + nV + ')';
+		if ( dg.nA != nA )
+			throw 'Bad construction nA = ' + dg.nA + ' (should be ' + nA + ')';
 	}
 	
 	override function assembly() : Void {
@@ -83,6 +85,10 @@ class RandomGraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGenerat
 		nV = vertices;
 		nE = edges;
 		super( dg, create_vertex, create_arc );
+		if ( dg.nV != nV )
+			throw 'Bad construction nV = ' + dg.nV + ' (should be ' + nV + ')';
+		if ( dg.nA / 2 != nE )
+			throw 'Bad construction nA = ' + dg.nA + ' (should be ' + ( nE * 2 ) + ')';
 	}
 	
 	override function assembly() : Void {
@@ -93,7 +99,7 @@ class RandomGraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGenerat
 			vs.push( dg.add_vertex( create_vertex() ) );
 		
 		// arcs
-		while ( 2 * dg.nA < nE ) {
+		while ( Math.floor( dg.nA / 2 ) < nE ) {
 			var v, w;
 			while ( ( v = vs[Std.random( nV )] ) == ( w = vs[Std.random( nV )] ) ) { }
 			dg.add_edge( v, w, create_arc );

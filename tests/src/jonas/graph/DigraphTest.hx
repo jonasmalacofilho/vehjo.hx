@@ -83,4 +83,11 @@ class DigraphTest extends TestCase {
 		check_arc( 6, 4 );
 	}
 	
+	public function test_bad_input() : Void {
+		var d = new Digraph();
+		var v = new Vertex();
+		var w = new Vertex();
+		assertTrue( try { d.add_arc( v, new Arc( w ) ); false; } catch ( e : Dynamic ) { true; } );
+	}
+	
 }

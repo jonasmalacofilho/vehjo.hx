@@ -13,6 +13,8 @@ import jonas.Maybe;
 import jonas.StopWatch;
 import jonas.Vector;
 
+import jonas.ds.AssociativeMatrix;
+
 /*
  * jonas-haxe tests
  * Copyright (c) 2012 Jonas Malaco Filho

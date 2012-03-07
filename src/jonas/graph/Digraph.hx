@@ -47,6 +47,7 @@ class Vertex {
 }
 
 class Arc {
+	
 	public var w : Vertex;
 	public var _next : Arc;
 	
@@ -55,6 +56,7 @@ class Arc {
 	public function toString() : String {
 		return Std.string( w.vi );
 	}
+	
 }
 
 class Digraph<V : Vertex, A : Arc> {
@@ -70,29 +72,50 @@ class Digraph<V : Vertex, A : Arc> {
 	}
 	
 	public function valid() : Bool {
+		for ( v in vs ) {
+			var p : A = cast v.adj;
+			while ( null != p ) {
+				var w : V = cast p.w;
+				try {
+					check_has_vertex( w );
+				}
+				catch ( e : Dynamic ) {
+					trace( e );
+					return false;
+				}
+				p = cast p._next;
+			}
+		}
 		return true;
 	}
 	
 	public function add_vertex( v : V ) : V {
+		if ( null == v )
+			throw 'vertex cannot be null';
 		if ( null != v.vi )
 			throw 'v.vi must be null';
+		
 		v.vi = vs.length;
 		vs.push( v );
 		nV++;
 		return v;
 	}
 	
-	public function get_vertex( vi : Int ) : V {
+	public function get_vertex( vi : Int ) : Null<V> {
 		return vs[vi];
 	}
 	
 	public function add_arc( v : V, a : A, ?unsafe : Bool = false, ?fast : Bool = false ) : A {
+		check_has_vertex( v );
+		check_has_vertex( cast a.w );
 		if ( v == a.w )
-			throw 'Arcs v-v not allowed';
+			throw 'Arc v-v not allowed';
 		if ( null != a._next )
-			throw 'a._next != null';
+			throw 'a._next must be null';
+		
 		if ( !unsafe )
 			remove_arc( v, cast a.w );
+		
 		if ( fast ) { // a becames head of v.adj
 			a._next = v.adj;
 			v.adj = a;
@@ -109,11 +132,15 @@ class Digraph<V : Vertex, A : Arc> {
 			else
 				q._next = a;
 		}
+		
 		nA++;
 		return a;
 	}
 	
-	public function get_arc( v : V, w : V ) : A {
+	public function get_arc( v : V, w : V ) : Null<A> {
+		check_has_vertex( v );
+		check_has_vertex( w );
+		
 		var p = v.adj;
 		while ( null != p ) {
 			if ( w == p.w )
@@ -124,6 +151,9 @@ class Digraph<V : Vertex, A : Arc> {
 	}
 	
 	public function remove_arc( v : V, w : V ) : Bool {
+		check_has_vertex( v );
+		check_has_vertex( w );
+		
 		var p = v.adj;
 		var q = null;
 		while ( null != p ) {
@@ -141,7 +171,7 @@ class Digraph<V : Vertex, A : Arc> {
 		return false;
 	}
 	
-	function order_arcs( exchange : A -> A -> Bool ) : Void {
+	public function order_arcs( exchange : A -> A -> Bool ) : Void {
 		for ( v in vs ) {
 			var adjs = [];
 			var p : A = cast v.adj;
@@ -160,6 +190,9 @@ class Digraph<V : Vertex, A : Arc> {
 	}
 	
 	public function add_edge( v : V, w : V, arc_constructor : V -> V -> A ) : Array<A> {
+		check_has_vertex( v );
+		check_has_vertex( w );
+		
 		var a1 = add_arc( v, arc_constructor( v, w ), false, false );
 		var a2 = add_arc( w, arc_constructor( w, v ), false, false );
 		return [ a1, a2 ];
@@ -192,6 +225,21 @@ class Digraph<V : Vertex, A : Arc> {
 		};
 	}
 	
+	public function toString() : String {
+		var b = new StringBuf();
+		b.add( '{ nV = ' );
+		b.add( nV );
+		b.add( ' , nA = ' );
+		b.add( nA );
+		b.add( ', adjacencies:\n' );
+		b.add( show_adjacencies() );
+		b.add( '}' );
+		return b.toString();
+	}
+	
+	
+	/** HELPER **/
+	
 	function show_adjacencies() : String {
 		var b = new StringBuf();
 		for ( v in vs ) {
@@ -208,16 +256,9 @@ class Digraph<V : Vertex, A : Arc> {
 		return b.toString();
 	}
 	
-	public function toString() : String {
-		var b = new StringBuf();
-		b.add( '{ nV = ' );
-		b.add( nV );
-		b.add( ' , nA = ' );
-		b.add( nA );
-		b.add( ', adjacencies:\n' );
-		b.add( show_adjacencies() );
-		b.add( '}' );
-		return b.toString();
+	function check_has_vertex( v : V ) : Void {
+		if ( null == v || null == v.vi || vs[v.vi] != v )
+			throw 'Node ' + v + ' does not belong to this digraph';
 	}
 	
 }
