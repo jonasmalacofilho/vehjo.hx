@@ -1,0 +1,11 @@
+-lib haxei
+-main haxei.Shell
+-cp src
+-cp U:\lib\jonas-haxe\src
+-cp U:\lib\haXe2\src
+-neko neko-shell.n
+--macro haxei.Compiler.register( 'jonas', true )
+--macro haxei.Compiler.register( 'neko', true, [ 'neko._std' ] )
+--macro haxei.Compiler.register( '', false )
+--macro haxei.Compiler.register( 'haxe', true, [ 'haxe.remoting', 'haxe.TimerQueue', 'haxe.unit', 'haxe.macro', 'haxe.web' ] )
+-cmd neko neko-shell.n
