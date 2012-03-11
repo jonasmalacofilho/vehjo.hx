@@ -75,7 +75,7 @@ class DAryHeap<T> {
 	}
 	
 	public function reserve( s : Int ) : Void {
-		if ( 0 < s && length <= s )
+		if ( 0 < s && length < s )
 			h[s - 1] = null;
 	}
 	
