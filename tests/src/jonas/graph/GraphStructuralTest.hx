@@ -1,9 +1,7 @@
 package jonas.graph;
 
-import haxe.unit.TestRunner;
-
 /*
- * Graph test suite
+ * 
  * Copyright (c) 2012 Jonas Malaco Filho
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,22 +21,37 @@ import haxe.unit.TestRunner;
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- */ 
+ */
 
-class GraphTestSuite {
+class GraphStructuralTest<D : Graph<V, A>, V : Vertex, A : Arc> extends DigraphStructuralTest<D, V, A> {
 
-	public static function add_tests( t : TestRunner ) : Void {
-		
-		t.add( new jonas.graph.DigraphStructuralTest() );
-		t.add( new jonas.graph.DigraphTest() );
-		
-		t.add( new jonas.graph.GraphStructuralTest() );
-		t.add( new jonas.graph.GraphTest() );
-		
-		t.add( new jonas.graph.ArcClassificationTest() );
-		t.add( new jonas.graph.DFSColoringTest() );
-		t.add( new jonas.graph.SPDijkstraTest() );
-		t.add( new jonas.graph.SPAStarTest() );
+	override function digraph( ?params : Array<Dynamic>) : D {
+		return cast new Graph<V, A>();
 	}
+	
+	override public function test_valid_parallel() : Void {
+		assertTrue( d.valid() );
+		d.allow_parallel = true;
+		assertFalse( d.valid() );
+	}
+	
+	public function test_valid_not_symmetric() : Void {
+		var v = d.add_vertex( vertex() );
+		var w = d.add_vertex( vertex() );
+		d.add_arc( v, w, arc() );
+		assertFalse( d.valid() );
+	}
+	
+	public function test_valid_symmetric() : Void {
+		var v = d.add_vertex( vertex() );
+		var w = d.add_vertex( vertex() );
+		d.add_arc( v, w, arc() );
+		d.add_arc( w, v, arc() );
+		assertTrue( d.valid() );
+	}
+	
+	// TODO test_add_edge
+	
+	// TODO test_remove_edge
 	
 }

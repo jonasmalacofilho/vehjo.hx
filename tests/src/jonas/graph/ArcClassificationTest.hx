@@ -1,9 +1,9 @@
 package jonas.graph;
 
-import jonas.graph.ArcClassification;
+import jonas.graph.ArcClassificationDigraph;
 
 /*
- * This is part of jonas.graph test cases
+ * This is part of jonas.graph test suite
  * Copyright (c) 2012 Jonas Malaco Filho
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,26 +25,42 @@ import jonas.graph.ArcClassification;
  * SOFTWARE.
  */
 
-class ArcClassificationTest extends DigraphTest {
+private typedef V = ArcClassificationVertex;
+private typedef A = ArcClassificationArc;
+private typedef D = ArcClassificationDigraph<V, A>;
 
-	override public function test_basic() : Void {
+class ArcClassificationTest extends DigraphStructuralTest<D, V, A> {
+
+	override function digraph( ?params : Array<Dynamic> ) : D {
+		return cast new D();
+	}
+	
+	override function vertex( ?params : Array<Dynamic> ) : V {
+		return cast new V();
+	}
+	
+	override function arc( ?params : Array<Dynamic> ) : A {
+		return cast new A();
+	}
+	
+	public function test_example() : Void {
 		// construction
-		var d = new ArcClassificationDigraph();
 		for ( i in 0...8 )
-			d.add_vertex( new ArcClassificationVertex() );
-		d.add_arc( d.get_vertex( 0 ), new ArcClassificationArc( d.get_vertex( 5 ) ) );
-		d.add_arc( d.get_vertex( 5 ), new ArcClassificationArc( d.get_vertex( 2 ) ) );
-		d.add_arc( d.get_vertex( 2 ), new ArcClassificationArc( d.get_vertex( 1 ) ) );
-		d.add_arc( d.get_vertex( 1 ), new ArcClassificationArc( d.get_vertex( 5 ) ) );
-		d.add_arc( d.get_vertex( 5 ), new ArcClassificationArc( d.get_vertex( 7 ) ) );
-		d.add_arc( d.get_vertex( 7 ), new ArcClassificationArc( d.get_vertex( 1 ) ) );
-		d.add_arc( d.get_vertex( 0 ), new ArcClassificationArc( d.get_vertex( 7 ) ) );
-		d.add_arc( d.get_vertex( 4 ), new ArcClassificationArc( d.get_vertex( 0 ) ) );
-		d.add_arc( d.get_vertex( 4 ), new ArcClassificationArc( d.get_vertex( 7 ) ) );
-		d.add_arc( d.get_vertex( 3 ), new ArcClassificationArc( d.get_vertex( 4 ) ) );
-		d.add_arc( d.get_vertex( 3 ), new ArcClassificationArc( d.get_vertex( 6 ) ) );
-		d.add_arc( d.get_vertex( 6 ), new ArcClassificationArc( d.get_vertex( 4 ) ) );
-		d.add_arc( d.get_vertex( 6 ), new ArcClassificationArc( d.get_vertex( 3 ) ) );
+			d.add_vertex( vertex() );
+		d.add_arc( d.get_vertex( 0 ), d.get_vertex( 5 ), arc() );
+		d.add_arc( d.get_vertex( 5 ), d.get_vertex( 2 ), arc() );
+		d.add_arc( d.get_vertex( 2 ), d.get_vertex( 1 ), arc() );
+		d.add_arc( d.get_vertex( 1 ), d.get_vertex( 5 ), arc() );
+		d.add_arc( d.get_vertex( 5 ), d.get_vertex( 7 ), arc() );
+		d.add_arc( d.get_vertex( 7 ), d.get_vertex( 1 ), arc() );
+		d.add_arc( d.get_vertex( 0 ), d.get_vertex( 7 ), arc() );
+		d.add_arc( d.get_vertex( 4 ), d.get_vertex( 0 ), arc() );
+		d.add_arc( d.get_vertex( 4 ), d.get_vertex( 7 ), arc() );
+		d.add_arc( d.get_vertex( 3 ), d.get_vertex( 4 ), arc() );
+		d.add_arc( d.get_vertex( 3 ), d.get_vertex( 6 ), arc() );
+		d.add_arc( d.get_vertex( 6 ), d.get_vertex( 4 ), arc() );
+		d.add_arc( d.get_vertex( 6 ), d.get_vertex( 3 ), arc() );
+		
 		assertEquals( 8, d.nV );
 		assertEquals( 13, d.nA );
 		

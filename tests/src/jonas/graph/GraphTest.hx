@@ -1,7 +1,7 @@
 package jonas.graph;
 
 /*
- * This is part of jonas.graph test suite
+ * 
  * Copyright (c) 2012 Jonas Malaco Filho
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,33 +25,10 @@ package jonas.graph;
 
 private typedef V = Vertex;
 private typedef A = Arc;
-private typedef D = Digraph<V, A>;
+private typedef D = Graph<V, A>;
  
-class DigraphTest extends DigraphStructuralTest<D, V, A> {
+class GraphTest extends GraphStructuralTest<D, V, A> {
 	
-	public function test_example() : Void {
-		// construction
-		for ( i in 0...8 )
-			d.add_vertex( vertex() );
-		d.add_arc( d.get_vertex( 0 ), d.get_vertex( 5 ), arc(), true );
-		d.add_arc( d.get_vertex( 5 ), d.get_vertex( 2 ), arc(), true, true );
-		d.add_arc( d.get_vertex( 2 ), d.get_vertex( 1 ), arc() );
-		d.add_arc( d.get_vertex( 1 ), d.get_vertex( 5 ), arc() );
-		d.add_arc( d.get_vertex( 5 ), d.get_vertex( 7 ), arc() );
-		d.add_arc( d.get_vertex( 7 ), d.get_vertex( 1 ), arc() );
-		d.add_arc( d.get_vertex( 0 ), d.get_vertex( 7 ), arc() );
-		d.add_arc( d.get_vertex( 4 ), d.get_vertex( 0 ), arc() );
-		d.add_arc( d.get_vertex( 4 ), d.get_vertex( 7 ), arc() );
-		d.add_arc( d.get_vertex( 3 ), d.get_vertex( 4 ), arc() );
-		d.add_arc( d.get_vertex( 3 ), d.get_vertex( 6 ), arc() );
-		d.add_arc( d.get_vertex( 6 ), d.get_vertex( 4 ), arc() );
-		d.add_arc( d.get_vertex( 6 ), d.get_vertex( 3 ), arc() );
-		d.add_arc( d.get_vertex( 6 ), d.get_vertex( 3 ), arc() );
-		
-		assertEquals( 8, d.nV );
-		assertEquals( 13, d.nA );
-		
-		trace( d );
-	}
+	// TODO test_components
 	
 }

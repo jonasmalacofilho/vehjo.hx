@@ -1,8 +1,6 @@
 package jonas.graph;
 
 import jonas.graph.DigraphGenerator;
-import jonas.graph.SP;
-import jonas.graph.SPDijkstra;
 
 /*
  * This is part of jonas.graph test cases
@@ -27,21 +25,37 @@ import jonas.graph.SPDijkstra;
  * SOFTWARE.
  */
 
+private typedef V = SPDijkstraVertex;
+private typedef A = SPArc;
+private typedef D = SPDijkstraDigraph<V, A>;
 
-class SPDijkstraTest extends DigraphTest {
+class SPDijkstraTest extends DigraphStructuralTest<D, V, A> {
 	
-	override public function test_basic() : Void {
+	override function digraph( ?params : Array<Dynamic> ) : D {
+		return cast new D();
+	}
+	
+	override function vertex( ?params : Array<Dynamic> ) : V {
+		return cast new V();
+	}
+	
+	override function arc( ?params : Array<Dynamic> ) : A {
+		if ( null == params || params.length < 1 )
+			params = [ 3.14 ];
+		return cast new A( params[0] );
+	}
+	
+	public function test_random() : Void {
 		// building the test digraph
 		var nV = 100;
 		var nA = 500;
-		var d = new RandomDigraph(
-			new SPDijkstraDigraph<SPDijkstraVertex, SPArc>(),
-			function() { return new SPDijkstraVertex(); },
-			function( v, w ) { return new SPArc( w, Math.random() * 20000 ); },
+		d = new RandomDigraph(
+			d,
+			function() { return vertex(); },
+			function( v, w ) { return arc( [ Math.random() * 2000 ] ); },
 			nV,
 			nA
 		).dg;
-		assertTrue( d.valid() );
 		
 		// path validation (does not check if it is an optimal one)
 		for ( v in d.vertices() ) {
@@ -70,33 +84,10 @@ class SPDijkstraTest extends DigraphTest {
 		// ?!?!
 	}
 	
-	override public function test_bad_input() : Void {
-		super.test_bad_input();
-		
-		// building the reference digraph
-		var nV = 50;
-		var nA = 150;
-		var d = new RandomDigraph(
-			new SPDijkstraDigraph<SPDijkstraVertex, SPArc>(),
-			function() { return new SPDijkstraVertex(); },
-			function( v, w ) { return new SPArc( w, Math.random() * 20000 ); },
-			nV,
-			nA
-		).dg;
-		
-		assertTrue( d.valid() );
-		
-		var n = Std.random( nA );
-		var cnt = 0;
-		for ( v in d.vertices() ) {
-			var p : SPArc = cast v.adj;
-			while ( null != p ) {
-				if ( n == cnt++ )
-					p.cost = - 1000 * Math.random();
-				p = cast p._next;
-			}
-		}
-		
+	public function test_valid_fail_cost() : Void {
+		var v = d.add_vertex( vertex() );
+		var w = d.add_vertex( vertex() );
+		var a = d.add_arc( v, w, arc( [ -.2 ] ) );
 		assertFalse( d.valid() );
 	}
 	

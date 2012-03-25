@@ -1,9 +1,6 @@
 package jonas.graph;
 
 import jonas.graph.DigraphGenerator;
-import jonas.graph.SP;
-import jonas.graph.SPAStar;
-import jonas.graph.SPDijkstra;
 
 /*
  * This is part of jonas.graph test cases
@@ -38,43 +35,52 @@ private class Point extends SPAStarVertex {
 	}
 }
 
-class SPAStarTest extends SPDijkstraTest {
+private typedef V = Point;
+private typedef A = SPArc;
+private typedef D = SPAStarDigraph<V, A>;
 
-	override public function test_basic() : Void {
+class SPAStarTest extends DigraphStructuralTest<D, V, A> {
+	
+	override function digraph( ?params : Array<Dynamic> ) : D {
+		return cast new D( dist );
+	}
+	
+	override function vertex( ?params : Array<Dynamic> ) : V {
+		if ( null == params || params.length < 2 )
+			params = [ 2, 3 ];
+		return cast new V( params[0], params[1] );
+	}
+	
+	override function arc( ?params : Array<Dynamic> ) : A {
+		if ( null == params || params.length < 1 )
+			params = [ 100 ];
+		return cast new A( params[0] );
+	}
+	
+	// point distance -> used as heuristic
+	function dist( a : V, b : V ) {
+		return Math.sqrt( ( a.x - b.x ) * ( a.x - b.x ) + ( a.y - b.y ) * ( a.y - b.y ) );
+	}
+
+	public function test_random() : Void {
 		
-		// point distance -> used as heuristic
-		var dist = function( a : Point, b : Point ) { return Math.sqrt( ( a.x - b.x ) * ( a.x - b.x ) + ( a.y - b.y ) * ( a.y - b.y ) ); };
-		
-		// building the reference digraph
+		// building the test digraph
 		var nV = 100;
 		var nA = 500;
-		var d = new RandomDigraph(
-			new SPDijkstraDigraph<Point, SPArc>(),
-			function() { return new Point( Math.random() * 100, Math.random() * 100 ); },
-			function( v, w ) { return new SPArc( w, dist( v, w ) * ( 1 + Math.random() ) ); },
+		d = new RandomDigraph(
+			d,
+			function() { return new V( Math.random() * 100, Math.random() * 100 ); },
+			function( v, w ) { return new A( dist( v, w ) * ( 1 + Math.random() ) ); },
 			nV,
 			nA
 		).dg;
-		assertTrue( d.valid() );
-		
-		// building the test digraph
-		var e = new SPAStarDigraph( dist );
-		for ( v in d.vertices() )
-			e.add_vertex( new Point( v.x, v.y ) );
-		for ( v in d.vertices() ) {
-			var p : SPArc = cast v.adj;
-			while ( null != p ) {
-				e.add_arc( e.get_vertex( v.vi ), new SPArc( e.get_vertex( p.w.vi ), p.cost ) );
-				p = cast p._next;
-			}
-		}
-		assertTrue( e.valid() );
+		d.use_heuristic = true;
 		
 		// path validation (does not check if it is an optimal one)
-		for ( v in e.vertices() )
-			for ( w in e.vertices() ) {
-				e.compute_shortest_path( v, w );
-				assertTrue( e.check_path( v, w ) );
+		for ( v in d.vertices() )
+			for ( w in d.vertices() ) {
+				d.compute_shortest_path( v, w );
+				assertTrue( d.check_path( v, w ) );
 			}
 		
 		// comparing Dijkstra and A*
@@ -82,18 +88,22 @@ class SPAStarTest extends SPDijkstraTest {
 		var astar_visited = 0;
 		for ( v in d.vertices() ) {
 			for ( w in d.vertices() ) {
+				d.use_heuristic = false;
 				d.compute_shortest_path( v, w );
-				e.compute_shortest_path( e.get_vertex( v.vi ), e.get_vertex( w.vi ) );
-				
 				for ( z in d.vertices() ) {
 					if ( null != z.parent )
 						dijkstra_visited++;
-					if ( null != e.get_vertex( z.vi ).parent )
+				}
+				var dijkstra_cst = w.cost;
+				
+				d.use_heuristic = true;
+				d.compute_shortest_path( v, w );
+				for ( z in d.vertices() ) {
+					if ( null != z.parent )
 						astar_visited++;
 				}
+				var astar_cst = d.get_vertex( w.vi ).cost;
 				
-				var dijkstra_cst = w.cost;
-				var astar_cst = e.get_vertex( w.vi ).cost;
 				if ( Math.isNaN( dijkstra_cst ) )
 					assertTrue( Math.isNaN( astar_cst ) );
 				else
@@ -105,36 +115,17 @@ class SPAStarTest extends SPDijkstraTest {
 		
 	}
 	
-	override public function test_bad_input() : Void {
-		super.test_bad_input();
-		
-		// point distance -> used as heuristic
-		var dist = function( a : Point, b : Point ) { return Math.sqrt( ( a.x - b.x ) * ( a.x - b.x ) + ( a.y - b.y ) * ( a.y - b.y ) ); };
-		
-		// building the reference digraph
-		var nV = 50;
-		var nA = 150;
-		var d = new RandomDigraph(
-			new SPAStarDigraph<Point, SPArc>( dist ),
-			function() { return new Point( Math.random() * 100, Math.random() * 100 ); },
-			function( v, w ) { return new SPArc( w, dist( v, w ) * ( 1 + Math.random() ) ); },
-			nV,
-			nA
-		).dg;
-		
-		assertTrue( d.valid() );
-		
-		var n = Std.random( nA );
-		var cnt = 0;
-		for ( v in d.vertices() ) {
-			var p : SPArc = cast v.adj;
-			while ( null != p ) {
-				if ( n == cnt++ )
-					p.cost = Math.random() * dist( v, cast p.w ) * .5;
-				p = cast p._next;
-			}
-		}
-		
+	public function test_valid_fail_cost() : Void {
+		var v = d.add_vertex( vertex() );
+		var w = d.add_vertex( vertex() );
+		var a = d.add_arc( v, w, arc( [ -.2 ] ) );
+		assertFalse( d.valid() );
+	}
+	
+	public function test_valid_fail_heuristic() : Void {
+		var v = d.add_vertex( vertex( [ 10, 20 ] ) );
+		var w = d.add_vertex( vertex( [ 20, 10 ] ) );
+		var a = d.add_arc( v, w, arc( [ .99 * dist( v, w ) ] ) );
 		assertFalse( d.valid() );
 	}
 	
