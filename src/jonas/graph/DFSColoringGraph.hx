@@ -1,9 +1,5 @@
 package jonas.graph;
 
-import jonas.graph.Digraph;
-import jonas.graph.DigraphGenerator;
-import jonas.graph.Graph;
-import jonas.MathExtension;
 import jonas.sort.Heapsort;
 
 /*
@@ -29,11 +25,6 @@ import jonas.sort.Heapsort;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
- 
-class DFSColoringVertex extends GraphVertex {
-	public var color : Int;
-	override public function toString() : String { return super.toString() + '(color=' + color + ')'; }
-}
 
 class DFSColoringGraph<V : DFSColoringVertex, A : Arc> extends Graph<V, A> {
 	
@@ -103,11 +94,14 @@ class DFSColoringGraph<V : DFSColoringVertex, A : Arc> extends Graph<V, A> {
 			v.color = -1;
 		ncolors = 0;
 		
+		// degree cache
+		var degree = Lambda.array( Lambda.map( vs, function( v ) { return vertex_degree( v ); } ) );
+		
 		// sort adjacencies by degree (desc)
-		order_arcs( function( a, b ) { return untyped a.w.degree() < b.w.degree(); } );
+		order_arcs( function( a, b ) { return degree[a.w.vi] < degree[b.w.vi]; } );
 		
 		// sort vertices by degree (desc)
-		var ws = Heapsort.heapsort( vs, function( a, b ) { return a.degree() < b.degree(); } );
+		var ws = Heapsort.heapsort( vs, function( a, b ) { return degree[a.vi] < degree[b.vi]; } );
 		
 		// dfs
 		for ( v in ws )

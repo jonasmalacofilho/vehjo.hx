@@ -35,6 +35,8 @@ class DigraphGenerator<D : Digraph<V, A>, V : Vertex, A : Arc> {
 		this.create_vertex = create_vertex;
 		this.create_arc = create_arc;
 		assembly();
+		if ( !dg.valid() )
+			throw 'Invalid';
 	}
 	
 	public function assembly() : Void {
@@ -69,14 +71,14 @@ class RandomDigraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGener
 		while ( dg.nA < nA ) {
 			var v, w;
 			while ( ( v = vs[Std.random( nV )] ) == ( w = vs[Std.random( nV )] ) ) { }
-			dg.add_arc( v, create_arc( v, w ) );
+			dg.add_arc( v, w, create_arc( v, w ) );
 		}
 		
 	}
 	
 }
 
-class RandomGraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGenerator<D, V, A> {
+class RandomGraph<D : Graph<V, A>, V : Vertex, A : Arc> extends DigraphGenerator<D, V, A> {
 	
 	var nV : Int;
 	var nE : Int;
@@ -109,7 +111,7 @@ class RandomGraph<D : Digraph<V, A>, V : Vertex, A : Arc> extends DigraphGenerat
 	
 }
 
-class PetersenGraph < D : Digraph < V, A > , V : Vertex, A : Arc > extends DigraphGenerator < D, V, A > {
+class PetersenGraph<D : Graph <V, A>, V : Vertex, A : Arc> extends DigraphGenerator<D, V, A> {
 	
 	public function new( dg, create_vertex, create_arc ) {
 		var nV = 10;
@@ -162,7 +164,7 @@ class PetersenGraph < D : Digraph < V, A > , V : Vertex, A : Arc > extends Digra
 // CrownGraph
 // order == 0 => u0, v0, u1, v1, ..., un, vn
 // order == 1 => u0, u1, ..., un, v0, v1, ..., vn
-class CrownGraph < D : Digraph < V, A > , V : Vertex, A : Arc > extends DigraphGenerator < D, V, A > {
+class CrownGraph<D : Graph<V, A>, V : Vertex, A : Arc> extends DigraphGenerator<D, V, A> {
 	
 	var n : Int;
 	var order : Int;

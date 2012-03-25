@@ -1,7 +1,5 @@
 package jonas.graph;
 
-import jonas.graph.Digraph;
-
 /*
  * Path existance (performing a DFS)
  * Copyright (c) 2012 Jonas Malaco Filho
@@ -24,11 +22,6 @@ import jonas.graph.Digraph;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-class PathExistanceVertex extends Vertex {
-	public var parent : PathExistanceVertex;
-	override public function toString() : String { return super.toString() + '(parent=' + ( null != parent ? parent.vi : null ) + ')'; }
-}
 
 class PathExistanceDigraph<V : PathExistanceVertex, A : Arc> extends Digraph<V, A> {
 	

@@ -1,7 +1,6 @@
 package jonas.graph;
 
 import jonas.ds.queue.PriorityQueue;
-import jonas.graph.SP;
 
 /*
  * Dijkstra algorithm for shortest paths
@@ -25,10 +24,6 @@ import jonas.graph.SP;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-class SPDijkstraVertex extends SPVertex {
-	public var _queue_index : Int;
-}
 
 class SPDijkstraDigraph<V : SPDijkstraVertex, A : SPArc> extends SPDigraph<V, A> {
 	

@@ -3,7 +3,7 @@ package jonas.graph;
 import jonas.graph.Digraph;
 
 /*
- * Graph: basic graph (simetric digraph)
+ * Graph: basic graph (symmetric digraph)
  * Copyright (c) 2012 Jonas Malaco Filho
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,36 +24,47 @@ import jonas.graph.Digraph;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-class GraphVertex extends Vertex {
-	
-	public inline function inbound_degree() : Int {
-		return outbound_degree();
-	}
-	
-	public inline function degree() : Int {
-		return outbound_degree();
-	}
-	
-}
  
 class Graph<V : Vertex, A : Arc> extends Digraph<V, A> {
 
-	override public function valid() : Bool {
-		return is_symmetric();
+	public function vertex_ibound_degree( v : V ) : Int {
+		return vertex_outbound_degree( v );
 	}
 	
-	function components_rec( v : Vertex, c : Int, cs : Array<Int> ) : Void {
+	public function vertex_degree( v : V ) : Int {
+		return vertex_outbound_degree( v );
+	}
+	
+	override public function valid() : Bool {
+		return !allow_parallel && super.valid() && is_symmetric();
+	}
+	
+	public function add_edge( v : V, w : V, arc_constructor : V -> V -> A ) : Array<A> {
+		var a1 = add_arc( v, w, arc_constructor( v, w ), false, false );
+		var a2 = add_arc( w, v, arc_constructor( w, v ), false, false );
+		return [ a1, a2 ];
+	}
+	
+	public function remove_edge( v : V, w : V ) : Bool {
+		var a = remove_arc( v, w );
+		var b = remove_arc( w, v );
+		if ( a && b )
+			return true;
+		else if ( a || b )
+			throw 'Was not simetric';
+		else
+			return false;
+	}
+	
+	function components_rec( v : V, c : Int, cs : Array<Int> ) : Void {		
 		cs[v.vi] = c;
-		var p : A = cast v.adj; while ( null != p ) {
+		for ( p in arcs_from( v ) ) {
 			if ( -1 == cs[p.w.vi] )
 				components_rec( cast p.w, c, cs );
-			p = cast p._next;
 		}
 	}
 	
 	public function components() : Array<Array<V>> {
-		
 		var cs = [];
 		for ( i in 0...nV )
 			cs.push( -1 );
