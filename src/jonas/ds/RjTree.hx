@@ -1,6 +1,7 @@
 package jonas.ds;
 
 import jonas.Maybe;
+import jonas.Vector;
 
 using Lambda;
 
@@ -32,12 +33,18 @@ using Lambda;
  * SOFTWARE.
  */
 
-private typedef EntryContainer<A> = List<A>;
+private typedef EntryContainer<A> = Array<A>;
  
 /**
  * RjTree node
  */
 class RjTree<T> {
+	
+#if debug
+	static var last_id : Int = -1;
+	var id( default, null ) : Int;
+	var level( default, null ) : Int;
+#end
 	
 	// Tree size
 	public var size(default, null) : Int;
@@ -71,6 +78,13 @@ class RjTree<T> {
 		_ymax = Math.NEGATIVE_INFINITY;
 		_area = 0.;
 		size = 0;
+		#if debug
+		if ( null != _parent )
+			level = _parent.level + 1;
+		else
+			level = 0;
+		id = ++last_id;
+		#end
 	}
 	
 	// Checks for overlapping point
@@ -105,6 +119,140 @@ class RjTree<T> {
 						throw "Unkown node type";
 					}
 			} );
+	}
+	
+	// Lazy search
+	public function lazy_search_triples( xmin : Float, ymin : Float, xmax : Float, ymax : Float ) : Iterator<RjObject<T>> {
+		var next = new List();
+		var stack = new List();
+		
+		var search_node = function( node : RjTree<T> ) {
+			if ( 0 < node._entries.length && node._overlapping_rectangle( xmin, ymin, xmax, ymax ) )
+				for ( e in node._entries )
+					switch ( e ) {
+						case RjTreeNode( child ):
+							stack.add( child );
+						case RjLeafNode( element, x, y ):
+							if ( _overlapping_point( x, y, xmin, ymin, xmax, ymax ) )
+								next.add( new RjObject( x,y, element ) );
+						default:
+							throw "Unkown node type";
+					}
+		};
+		
+		var search = function( stop : Int ) {
+			while ( stop > next.length && !stack.empty() )
+				search_node( stack.pop() );
+		};
+		
+		stack.add( this );
+		search( 1 );
+		
+		return {
+			hasNext : function() { return !next.empty(); },
+			next : function() { search( 2 ); return next.pop(); }
+		};
+		
+	}
+	
+	// Lazy search
+	public function lazy_search( xmin : Float, ymin : Float, xmax : Float, ymax : Float ) : Iterator<T> {
+		var next = new List();
+		var stack = new List();
+		
+		var search_node = function( node : RjTree<T> ) {
+			if ( 0 < node._entries.length && node._overlapping_rectangle( xmin, ymin, xmax, ymax ) )
+				for ( e in node._entries )
+					switch ( e ) {
+						case RjTreeNode( child ):
+							stack.add( child );
+						case RjLeafNode( element, x, y ):
+							if ( _overlapping_point( x, y, xmin, ymin, xmax, ymax ) )
+								next.add( element );
+						default:
+							throw "Unkown node type";
+					}
+		};
+		
+		var search = function( stop : Int ) {
+			while ( stop > next.length && !stack.empty() )
+				search_node( stack.pop() );
+		};
+		
+		stack.add( this );
+		search( 1 );
+		
+		return {
+			hasNext : function() { return !next.empty(); },
+			next : function() { search( 2 ); return next.pop(); }
+		};
+		
+	}
+	
+	// Lazy iterator
+	public function triples() : Iterator<RjObject<T>> {
+		var next = new List();
+		var stack = new List();
+		
+		var search_node = function( node : RjTree<T> ) {
+			if ( 0 < node._entries.length )
+				for ( e in node._entries )
+					switch ( e ) {
+						case RjTreeNode( child ):
+							stack.add( child );
+						case RjLeafNode( element, x, y ):
+							next.add( new RjObject( x, y, element ) );
+						default:
+							throw "Unkown node type";
+					}
+		};
+		
+		var search = function( stop : Int ) {
+			while ( stop >= next.length && !stack.empty() )
+				search_node( stack.pop() );
+		};
+		
+		stack.add( this );
+		search( 0 );
+		
+		return {
+			hasNext : function() { return !next.empty(); },
+			next : function() { search( 1 ); return next.pop(); }
+		};
+		
+	}
+	
+	// Lazy iterator
+	public function iterator() : Iterator<T> {
+		var next = new List();
+		var stack = new List();
+		
+		var search_node = function( node : RjTree<T> ) {
+			if ( 0 < node._entries.length )
+				for ( e in node._entries )
+					switch ( e ) {
+						case RjTreeNode( child ):
+							stack.add( child );
+						case RjLeafNode( element, x, y ):
+							next.add( element );
+						default:
+							throw "Unkown node type";
+					}
+		};
+		
+		var search = function( stop : Int ) {
+			while ( stop >= next.length && !stack.empty() )
+				search_node( stack.pop() );
+		};
+		
+		stack.add( this );
+		search( 0 );
+		
+		return {
+			hasNext : function() { return !next.empty(); },
+			next : function() { search( 1 ); return next.pop(); }
+		};
+		
 	}
 	
 	// Default search for a rectangle, returns a List
@@ -208,7 +356,7 @@ class RjTree<T> {
 				switch ( e ) {
 					case RjTreeNode( child ):
 						var c = child.search_element( x, y );
-						if ( empty != c )
+						if ( Maybe.empty != c )
 							return c;
 					case RjLeafNode( element, ex, ey ):
 						if ( ex == x && ey == y )
@@ -218,7 +366,7 @@ class RjTree<T> {
 				}
 			}
 		}
-		return empty;
+		return Maybe.empty;
 	}
 	
 	public function all() : List<T> {
@@ -395,4 +543,12 @@ enum RjEntry<T> {
 	RjTreeNode( child : RjTree<T> );
 	RjLeafNode( element : T, x : Float, y : Float );
 	RjEmptyNode;
+}
+
+class RjObject<T> extends Vector {
+	public var data : T;
+	public function new( x : Float, y : Float, data : T ) {
+		super( x, y );
+		this.data = data;
+	}
 }
