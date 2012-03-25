@@ -27,22 +27,50 @@ using jonas.Base16;
  * SOFTWARE.
  */
 
-class HMACTestCase extends haxe.unit.TestCase {
+class HMACTestCase extends jonas.unit.TestCase {
 	var key : String;
 	var data : String;
 	var digest : String;
 	var truncate : Int;
 	var c : HMAC;
 	
-	public function new( key, data, digest, hash, truncate = 0 ) {
+	public function new() {
 		super();
-		this.key = key;
-		this.data = data;
-		this.digest = digest;
-		this.truncate = truncate;
-		switch ( hash.toLowerCase() ) {
-			case 'md5': c = new HMAC_Md5( key );
-			case 'sha1': c = new HMAC_SHA1( key );
+		// Test vectors from RFC 2202
+		set_configuration( 'RFC 2202 - 01', { key : '0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b'.decode16(), data : 'Hi There', digest : '9294727a3638bb1c13f48ef8158bfc9d', hash : 'md5', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 02', { key : 'Jefe', data : 'what do ya want for nothing?', digest : '750c783e6ab0b503eaa86e310a5db738', hash : 'md5', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 03', { key : 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'.decode16(), data : 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD'.decode16(), digest : '56be34521d144c88dbb8c733f0e8b3f6', hash : 'md5', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 04', { key : '0102030405060708090a0b0c0d0e0f10111213141516171819'.decode16(), data : BytesExtension.alloc_filled( 50, 0xcd ).toString(), digest : '697eaf0aca3a3aea3a75164746ffaa79', hash : 'md5', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 05', { key : '0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'.decode16(), data : 'Test With Truncation', digest : '56461ef2342edc00f9bab995690efd4c', hash : 'md5', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 06', { key : '0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'.decode16(), data : 'Test With Truncation', digest : '56461ef2342edc00f9bab995', hash : 'md5', truncate : 96 } );
+		set_configuration( 'RFC 2202 - 07', { key : BytesExtension.alloc_filled( 80, 0xaa ).toString(), data : 'Test Using Larger Than Block-Size Key - Hash Key First', digest : '6b1ab7fe4bd7bf8f0b62e6ce61b9d0cd', hash : 'md5', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 08', { key : BytesExtension.alloc_filled( 80, 0xaa ).toString(), data : 'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data', digest : '6f630fad67cda0ee1fb1f562db3aa53e', hash : 'md5', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 09', { key : '0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b'.decode16(), data : 'Hi There', digest : 'b617318655057264e28bc0b6fb378c8ef146be00', hash : 'sha1', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 10', { key : 'Jefe', data : 'what do ya want for nothing?', digest : 'effcdf6ae5eb2fa2d27416d5f184df9c259a7c79', hash : 'sha1', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 11', { key : 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'.decode16(), data : BytesExtension.alloc_filled( 50, 0xdd ).toString(), digest : '125d7342b9ac11cd91a39af48aa17b4f63f175d3', hash : 'sha1', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 12', { key : '0102030405060708090a0b0c0d0e0f10111213141516171819'.decode16(), data : BytesExtension.alloc_filled( 50, 0xcd ).toString(), digest : '4c9007f4026250c6bc8414f9bf50c86c2d7235da', hash : 'sha1', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 13', { key : '0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'.decode16(), data : 'Test With Truncation', digest : '4c1a03424b55e07fe7f27be1d58bb9324a9a5a04', hash : 'sha1', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 14', { key : '0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'.decode16(), data : 'Test With Truncation', digest : '4c1a03424b55e07fe7f27be1', hash : 'sha1', truncate : 96 } );
+		set_configuration( 'RFC 2202 - 15', { key : BytesExtension.alloc_filled( 80, 0xaa ).toString(), data : 'Test Using Larger Than Block-Size Key - Hash Key First', digest : 'aa4ae5e15272d00e95705637ce8a3b55ed402112', hash : 'sha1', truncate : 0 } );
+		set_configuration( 'RFC 2202 - 16', { key : BytesExtension.alloc_filled( 80, 0xaa ).toString(), data : 'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data', digest : 'e8e99d0f45237d786d6bbaa7965c7808bbff1a91', hash : 'sha1', truncate : 0 } );
+		// Other test vectors
+		set_configuration( 'Other - 01', { key : '', data : '', digest : '74e6f7298a9c2d168935f58c001bad88', hash : 'md5', truncate : 0 } );
+		set_configuration( 'Other - 02', { key : '', data : '', digest : 'fbdb1d1b18aa6c08324b7d64b71fb76370690e1d', hash : 'sha1', truncate : 0 } );
+		set_configuration( 'Other - 03', { key : 'key', data : 'The quick brown fox jumps over the lazy dog', digest : '80070713463e7749b90c2dc24911e275', hash : 'md5', truncate : 0 } );
+		set_configuration( 'Other - 04', { key : 'key', data : 'The quick brown fox jumps over the lazy dog', digest : '80070713463e7749b90c2dc24911e274', hash : 'md5', truncate : 127 } );
+		set_configuration( 'Other - 05', { key : 'key', data : 'The quick brown fox jumps over the lazy dog', digest : 'de7c9b85b8b78aa6bc8a7a36f70a90701c9db4d9', hash : 'sha1', truncate : 0 } );
+		_config_default = 'RFC 2202 - 14';
+	}
+		
+	override function configure( name : String ) : Void {
+		var c = _configs.get( name );
+		key = c.key;
+		data = c.data;
+		digest = c.digest;
+		truncate = c.truncate;
+		switch ( c.hash.toLowerCase() ) {
+			case 'md5': this.c = new HMAC_Md5( key );
+			case 'sha1': this.c = new HMAC_SHA1( key );
 			default: throw 'Unkown hash function';
 		}
 	}
@@ -53,38 +81,12 @@ class HMACTestCase extends haxe.unit.TestCase {
 }
 
 class HMACTestSuite {
-	public function new() {
-		var a = new haxe.unit.TestRunner();
+	static function main() {
+		var a = new jonas.unit.TestRunner();
 		add_tests( a );
 		a.run();
 	}
-	public static function main() {
-		new HMACTestSuite();
-	}
 	public static function add_tests( a : haxe.unit.TestRunner ) {
-		// Test vectors from RFC 2202
-		a.add( new HMACTestCase( '0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b'.decode16(), 'Hi There', '9294727a3638bb1c13f48ef8158bfc9d', 'md5' ) );
-		a.add( new HMACTestCase( 'Jefe', 'what do ya want for nothing?', '750c783e6ab0b503eaa86e310a5db738', 'md5' ) );
-		a.add( new HMACTestCase( 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'.decode16(), 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD'.decode16(), '56be34521d144c88dbb8c733f0e8b3f6', 'md5' ) );
-		a.add( new HMACTestCase( '0102030405060708090a0b0c0d0e0f10111213141516171819'.decode16(), BytesExtension.alloc_filled( 50, 0xcd ).toString(), '697eaf0aca3a3aea3a75164746ffaa79', 'md5' ) );
-		a.add( new HMACTestCase( '0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'.decode16(), 'Test With Truncation', '56461ef2342edc00f9bab995690efd4c', 'md5' ) );
-		a.add( new HMACTestCase( '0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'.decode16(), 'Test With Truncation', '56461ef2342edc00f9bab995', 'md5', 96 ) );
-		a.add( new HMACTestCase( BytesExtension.alloc_filled( 80, 0xaa ).toString(), 'Test Using Larger Than Block-Size Key - Hash Key First', '6b1ab7fe4bd7bf8f0b62e6ce61b9d0cd', 'md5' ) );
-		a.add( new HMACTestCase( BytesExtension.alloc_filled( 80, 0xaa ).toString(), 'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data', '6f630fad67cda0ee1fb1f562db3aa53e', 'md5' ) );
-		a.add( new HMACTestCase( '0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b'.decode16(), 'Hi There', 'b617318655057264e28bc0b6fb378c8ef146be00', 'sha1' ) );
-		a.add( new HMACTestCase( 'Jefe', 'what do ya want for nothing?', 'effcdf6ae5eb2fa2d27416d5f184df9c259a7c79', 'sha1' ) );
-		a.add( new HMACTestCase( 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'.decode16(), BytesExtension.alloc_filled( 50, 0xdd ).toString(), '125d7342b9ac11cd91a39af48aa17b4f63f175d3', 'sha1' ) );
-		a.add( new HMACTestCase( '0102030405060708090a0b0c0d0e0f10111213141516171819'.decode16(), BytesExtension.alloc_filled( 50, 0xcd ).toString(), '4c9007f4026250c6bc8414f9bf50c86c2d7235da', 'sha1' ) );
-		a.add( new HMACTestCase( '0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'.decode16(), 'Test With Truncation', '4c1a03424b55e07fe7f27be1d58bb9324a9a5a04', 'sha1' ) );
-		a.add( new HMACTestCase( '0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c'.decode16(), 'Test With Truncation', '4c1a03424b55e07fe7f27be1', 'sha1', 96 ) );
-		a.add( new HMACTestCase( BytesExtension.alloc_filled( 80, 0xaa ).toString(), 'Test Using Larger Than Block-Size Key - Hash Key First', 'aa4ae5e15272d00e95705637ce8a3b55ed402112', 'sha1' ) );
-		a.add( new HMACTestCase( BytesExtension.alloc_filled( 80, 0xaa ).toString(), 'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data', 'e8e99d0f45237d786d6bbaa7965c7808bbff1a91', 'sha1' ) );
-		//a.add( new HMACTestCase( BytesExtension.alloc_filled( 80, 0xaa ).toString(), 'e8e99d0f45237d786d6bbaa7965c7808bbff1a91'.decode16(), '4c1a03424b55e07fe7f27be1d58bb9324a9a5a04', 'sha1' ) );
-		// Other test vectors
-		a.add( new HMACTestCase( '', '', '74e6f7298a9c2d168935f58c001bad88', 'md5' ) );
-		a.add( new HMACTestCase( '', '', 'fbdb1d1b18aa6c08324b7d64b71fb76370690e1d', 'sha1' ) );
-		a.add( new HMACTestCase( 'key', 'The quick brown fox jumps over the lazy dog', '80070713463e7749b90c2dc24911e275', 'md5' ) );
-		a.add( new HMACTestCase( 'key', 'The quick brown fox jumps over the lazy dog', '80070713463e7749b90c2dc24911e274', 'md5', 127 ) );
-		a.add( new HMACTestCase( 'key', 'The quick brown fox jumps over the lazy dog', 'de7c9b85b8b78aa6bc8a7a36f70a90701c9db4d9', 'sha1' ) );
+		a.add( new HMACTestCase() );
 	}
 }

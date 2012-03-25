@@ -35,7 +35,7 @@ class NumberPrinterTestSuite extends TestCase
 {
 
 	public static function add_tests( a : haxe.unit.TestRunner ) {
-		a.add( new MathExtensionTestSuite() );
+		a.add( new NumberPrinterTestSuite() );
 	}
 	
 	static inline var THREADS = 1;

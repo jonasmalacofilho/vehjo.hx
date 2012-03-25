@@ -1,19 +1,6 @@
 package ;
 
-import haxe.unit.TestRunner;
 import neko.Lib;
-
-import jonas.Base16;
-import jonas.BoxedIterable;
-import jonas.ds.DSTools;
-import jonas.ds.ListTools;
-import jonas.ds.queue.Queue;
-import jonas.io.BytesExtension;
-import jonas.Maybe;
-import jonas.StopWatch;
-import jonas.Vector;
-
-import jonas.ds.AssociativeMatrix;
 
 /*
  * jonas-haxe tests
@@ -48,7 +35,8 @@ class Tests {
 	}
 	
 	static function run_all_tests() {
-		var t = new TestRunner();
+		var t = new jonas.unit.TestRunner();
+		t.customTrace = function( v, ?p ) { };
 		jonas.Base64TestSuite.add_tests( t );
 		jonas.HMACTestSuite.add_tests( t );
 		jonas.MathExtensionTestSuite.add_tests( t );

@@ -1,7 +1,6 @@
 package jonas.ds;
 
-import haxe.unit.TestCase;
-import haxe.unit.TestRunner;
+import jonas.unit.TestCase;
 import jonas.ds.DAryHeap;
 import jonas.StopWatch;
 
@@ -30,50 +29,38 @@ import jonas.StopWatch;
 
 class DAryHeapTestSuite {
 	
-	var t : TestRunner;
-	
-	public function new() {
-		t = new TestRunner();
-		add_tests( t );
-		report( 'All tests took ' + StopWatch.time( function() { t.run(); } ) + ' seconds to run' );
-	}
-	
-	public static function add_tests( t : TestRunner ) {
-		for ( a in 2...33 )
-			if ( a % 2 == 0 )
-				test_arity( t, a );
-	}
-	
-	static function test_arity( t : TestRunner, arity : Int ) {
-		t.add( new MaxHeapTests( arity ) );
-		t.add( new MinHeapTests( arity ) );
+	public static function add_tests( t : haxe.unit.TestRunner ) {
+		t.add( new MaxHeapTests() );
+		t.add( new MinHeapTests() );
 	}
 	
 	static function main() {
-		report( 'Copyright (c) 2011 Jonas Malaco Filho\n' );
-		report( 'haXe/nekovm says: "Hello!"' );
-		new DAryHeapTestSuite();
+		var t = new jonas.unit.TestRunner();
+		add_tests( t );
+		trace( 'All tests took ' + StopWatch.time( function() { t.run(); } ) + ' seconds to run' );
 	}
 	
-	public static function report( s : String ) : Void {
-#if neko
-		neko.Lib.println( s );
-#elseif cpp
-		cpp.Lib.println( s );
-#else
-		trace( s );
-#end
-	}
 }
 
 class MaxHeapTests extends TestCase {
 	
 	var h : DAryHeap<Int>;
-	var arity : Int;
+	public var arity : Int;
 	
-	public function new( arity : Int ) {
+	public function new() {
 		super();
-		this.arity = arity;
+		for ( a in 2...33 ) {
+			var name = 'arity = ' + StringTools.lpad( Std.string( a ), '0', 2 );
+			set_configuration( name, a );
+		}
+	}
+	
+	override function configure( name : String ) : Void {
+		var c = _configs.get( name );
+		if ( null == c || !Std.is( c, Int ) )
+			arity = 5
+		else
+			arity = c;
 	}
 	
 	function init( size=0 ) : Void {
@@ -114,7 +101,7 @@ class MaxHeapTests extends TestCase {
 	}
 	
 	public function test_basic() : Void {
-		DAryHeapTestSuite.report( 'test_basic with arity=' + arity + ' took ' + tbasic() + ' seconds' );
+		trace( 'test_basic with arity=' + arity + ' took ' + tbasic() + ' seconds' );
 	}
 	
 	function tbasic() : Float {

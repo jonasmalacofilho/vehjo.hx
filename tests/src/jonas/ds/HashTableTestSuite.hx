@@ -2,9 +2,8 @@ package jonas.ds;
 
 import haxe.io.Bytes;
 import haxe.io.Eof;
-import haxe.unit.TestCase;
-import haxe.unit.TestRunner;
 import jonas.ds.HashTable;
+import jonas.unit.TestCase;
 import neko.io.File;
 import neko.Lib;
 
@@ -34,34 +33,18 @@ import neko.Lib;
 
 class HashTableTestSuite {
 	
-	public function new() {
-		var tests = new TestRunner();
-		add_tests( tests );
-		tests.run();
-		
-	}
-	
-	public static function add_tests( tests : TestRunner ) {
-		tests.add( new IntHashTableTest( 1 << 10 ) );
-		tests.add( new IntHashTableTest( 1 << 15 ) );
-		//tests.add( new IntHashTableTest( 1 << 20 ) );
-		tests.add( new StringHashTableTest( 1 << 10 ) );
-		tests.add( new StringHashTableTest( 1 << 15 ) );
-		//tests.add( new StringHashTableTest( 1 << 20 ) );
-		tests.add( new OtherStringHashTableTest( 1 << 10 ) );
-		tests.add( new OtherStringHashTableTest( 1 << 15 ) );
-		//tests.add( new OtherStringHashTableTest( 1 << 20 ) );
-		tests.add( new LongStringHashTableTest( 1 << 10 ) );
-		tests.add( new LongStringHashTableTest( 1 << 15 ) );
-		//tests.add( new LongStringHashTableTest( 1 << 20 ) );
-		tests.add( new PracticalStringHashTableTest() );
+	public static function add_tests( t : haxe.unit.TestRunner ) {
+		t.add( new IntHashTableTest() );
+		t.add( new StringHashTableTest() );
+		t.add( new OtherStringHashTableTest() );
+		t.add( new LongStringHashTableTest() );
+		t.add( new PracticalStringHashTableTest() );
 	}
 
 	static function main() {
-		Lib.println( 'HashTable' );
-		Lib.println( 'Copyright (c) 2012 Jonas Malaco Filho' );
-		Lib.println( 'Powered by haXe (haxe.org) and neko (nekovm.org)' );
-		new HashTableTestSuite();
+		var tests = new jonas.unit.TestRunner();
+		add_tests( tests );
+		tests.run();
 	}
 	
 }
@@ -70,15 +53,31 @@ class IntHashTableTest extends TestCase {
 	
 	var keys : Array<Dynamic>;
 	var values : Array<Int>;
-	var n : Int;
+	public var n : Int;
 	
-	public function new( n : Int ) {
+	public function new() {
 		super();
-		this.n = n;
-		//trace( 'Generating keys' );
+		set_configuration( Std.string( 1 << 10 ) + ' elements', 1 << 10 );
+		set_configuration( Std.string( 1 << 15 ) + ' elements', 1 << 15 );
+	}
+	
+	override function configure( name : String ) : Void {
+		var c = _configs.get( name );
+		if ( null == c || !Std.is( c, Int ) )
+			n = 20;
+		else
+			n = c;
+	}
+	
+	override public function setup() : Void {
+		super.setup();
 		generate_keys();
-		//trace( 'Generating values' );
 		generate_values();
+	}
+	
+	override public function tearDown() : Void {
+		keys = null;
+		values = null;
 	}
 	
 	function generate_keys() {
@@ -140,6 +139,9 @@ class IntHashTableTest extends TestCase {
 		//trace( h.stats() );
 	}
 	
+	#if !neko
+	@fail( 'expected' )
+	@obs( 'randomized and cross-platform strucure' )
 	public function test_performance() {
 		var r = generate_ref_table();
 		for ( i in 0...n ) {
@@ -161,8 +163,10 @@ class IntHashTableTest extends TestCase {
 		} );
 		trace( [ th, tr, th / tr ] );
 		trace( untyped h.stats() );
-		assertTrue( true );
+
+		assertTrue( th <= tr, pos_infos( 'time<=std' ) );
 	}
+	#end
 	
 }
 
