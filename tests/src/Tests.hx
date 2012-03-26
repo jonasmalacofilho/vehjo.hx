@@ -36,7 +36,7 @@ class Tests {
 	
 	static function run_all_tests() {
 		var t = new jonas.unit.TestRunner();
-		t.customTrace = function( v, ?p ) { };
+		//t.customTrace = function( v, ?p ) { };
 		jonas.Base64TestSuite.add_tests( t );
 		jonas.HMACTestSuite.add_tests( t );
 		jonas.MathExtensionTestSuite.add_tests( t );

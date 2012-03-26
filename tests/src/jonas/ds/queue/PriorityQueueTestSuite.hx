@@ -55,13 +55,7 @@ class PriorityQueueTestSuite {
 	}
 	
 	public static function report( s : String ) : Void {
-#if neko
-		neko.Lib.println( s );
-#elseif cpp
-		cpp.Lib.println( s );
-#else
 		trace( s );
-#end
 	}
 }
 
