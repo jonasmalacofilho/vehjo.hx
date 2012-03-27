@@ -1,554 +1,410 @@
 package jonas.ds;
-
-import jonas.Maybe;
 import jonas.Vector;
 
-using Lambda;
+private typedef EntryContainer<T> = Array<Entry<T>>;
 
-/*
+/**
  * R-Tree variant 'j'.
  * Changes from the original R-Tree:
 	 * - nodes may have simultaneously both node and object entries
 	 * - no node splitting algorithm
 	 * - forced 1-level reinsertion on node overflow (from R*-Tree)
- * 
  * Copyright (c) 2012 Jonas Malaco Filho
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-private typedef EntryContainer<A> = Array<A>;
- 
-/**
- * RjTree node
  */
 class RjTree<T> {
 	
-#if debug
-	static var last_id : Int = -1;
-	var id( default, null ) : Int;
-	var level( default, null ) : Int;
-#end
 	
-	// Tree size
-	public var size(default, null) : Int;
+	// --- (sub) tree information and entries
 	
-	// If not root, parent tree
-	var _parent : RjTree<T>;
+	// (sub) tree size
+	public var length( default, null ) : Int;
+	// parent node (null if root)
+	var parent : RjTree<T>;
+	// bucket entries (up to bucketSize)
+	var entries : EntryContainer<T>;
+	// max num of entries in a bucket
+	public var bucketSize( default, null ) : Int;
+	// forced 1-level reinsertion on overflow
+	public var forcedReinsertion( default, null ) : Bool;
 	
-	// Tree entries (up to maximum)
-	var _entries : EntryContainer<RjEntry<T>>;
-
-	// Maximum tree entries
-	var _bucket_size : Int;
-	static inline var DEFAULT_BUCKET_SIZE = 7;
 	
-	// Bounding-box
-	var _xmin : Float;
-	var _ymin : Float;
-	var _xmax : Float;
-	var _ymax : Float;
-	var _area : Float;
-
-	// Constructor
-	// _parent should not be used outside of the class
-	public function new( bucket_size = DEFAULT_BUCKET_SIZE, ?_parent : RjTree<T> ) {
-		this._bucket_size = bucket_size;
-		this._parent = _parent;
-		_entries = new EntryContainer<RjEntry<T>>();
-		_xmin = Math.POSITIVE_INFINITY;
-		_ymin = Math.POSITIVE_INFINITY;
-		_xmax = Math.NEGATIVE_INFINITY;
-		_ymax = Math.NEGATIVE_INFINITY;
-		_area = 0.;
-		size = 0;
-		#if debug
-		if ( null != _parent )
-			level = _parent.level + 1;
+	// ---- (sub) tree bounding box
+	
+	var xMin : Float;
+	var yMin : Float;
+	var xMax : Float;
+	var yMax : Float;
+	var area : Float;
+	
+	
+	// ---- debug information
+	
+	#if RJTREE_DEBUG
+	public var level( default, null ) : Int;
+	#end
+	
+	
+	// ---- construction
+	
+	public function new( ?bucketSize = 7, ?forcedReinsertion = true ) {
+		this.bucketSize = bucketSize;
+		this.forcedReinsertion = forcedReinsertion;
+		
+		entries = new EntryContainer();
+		xMin = Math.POSITIVE_INFINITY;
+		yMin = Math.POSITIVE_INFINITY;
+		xMax = Math.NEGATIVE_INFINITY;
+		yMax = Math.NEGATIVE_INFINITY;
+		area = 0.;
+		length = 0;
+		#if RJTREE_DEBUG
+		if ( null != parent )
+			level = parent.level + 1;
 		else
 			level = 0;
-		id = ++last_id;
 		#end
 	}
 	
-	// Checks for overlapping point
-	static inline function _overlapping_point( x : Float, y : Float, xmin : Float, ymin : Float, xmax : Float, ymax : Float ) : Bool {
-		return x >= xmin && x <= xmax && y >= ymin && y <= ymax;
+	inline static function child<A>( parent : RjTree<A> ) : RjTree<A> {
+		var r = new RjTree( parent.bucketSize, parent.forcedReinsertion );
+		r.parent = parent;
+		return r;
 	}
 	
-	// Returns the area of a given bounding box
-	static inline function _bounding_box_area( ax : Float, ay : Float, bx : Float, by : Float ) : Float {
-		return ( bx - ax ) * ( by - ay );
-	} // _bounding_box_area
 	
-	// Checks for overlapping rectangle
-	inline function _overlapping_rectangle( xmin : Float, ymin : Float, xmax : Float, ymax : Float ) : Bool {
-		return xmax >= _xmin && _xmax >= xmin && ymax >= _ymin && _ymax >= ymin;
+	// --- querying
+	
+	static inline function searchNode<A>( node : RjTree<A>, cache : List<A>, stack : List<RjTree<A>>, xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Void {
+		if ( node.entries.length > 0 && node.rectangleOverlaps( xMin, yMin, xMax, yMax ) )
+			for ( ent in node.entries )
+				switch ( ent ) {
+					case Node( entChild ) :
+						stack.add( entChild );
+					case LeafPoint( entObject, entX, entY ) :
+						if ( pointOverlapsRectangle( entX, entY, xMin, yMin, xMax, yMax ) )
+							cache.add( entObject );
+					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+						if ( rectangleOverlapsRectangle( entX, entY, entX + entWidth, entY + entHeight, xMin, yMin, xMax, yMax ) )
+							cache.add( entObject );
+					default : throw 'Unexpected ' + ent;
+				}
 	}
 	
-	// Internal rectangle search function
-	// Uses the insertion function to produce the resultant Iterable
-	// The insertion function is responsable for the side effects that
-	// assemble the answer.
-	function _search_rectangle( xmin : Float, ymin : Float, xmax : Float, ymax : Float, insertion : T -> Void ) : Void {
-		if ( 0 < _entries.length && _overlapping_rectangle( xmin, ymin, xmax, ymax ) )
-			_entries.iter( function( e : RjEntry<T> ) {
-				switch ( e ) {
-					case RjTreeNode( child ):
-						child._search_rectangle( xmin, ymin, xmax, ymax, insertion );
-					case RjLeafNode( element, x, y ):
-						if ( _overlapping_point( x, y, xmin, ymin, xmax, ymax ) )
-							insertion( element );
-					default:
-						throw "Unkown node type";
-					}
-			} );
+	static inline function searchStep<A>( cache : List<A>, stack : List<RjTree<A>>, minCacheSize : Int, xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Void {
+		while ( minCacheSize > cache.length && !stack.isEmpty() )
+			searchNode( stack.pop(), cache, stack, xMin, yMin, xMax, yMax );
 	}
 	
-	// Lazy search
-	public function lazy_search_triples( xmin : Float, ymin : Float, xmax : Float, ymax : Float ) : Iterator<RjObject<T>> {
-		var next = new List();
+	public function search( xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Iterator<T> {
+		var cache = new List();
 		var stack = new List();
 		
-		var search_node = function( node : RjTree<T> ) {
-			if ( 0 < node._entries.length && node._overlapping_rectangle( xmin, ymin, xmax, ymax ) )
-				for ( e in node._entries )
-					switch ( e ) {
-						case RjTreeNode( child ):
-							stack.add( child );
-						case RjLeafNode( element, x, y ):
-							if ( _overlapping_point( x, y, xmin, ymin, xmax, ymax ) )
-								next.add( new RjObject( x,y, element ) );
-						default:
-							throw "Unkown node type";
-					}
-		};
-		
-		var search = function( stop : Int ) {
-			while ( stop > next.length && !stack.empty() )
-				search_node( stack.pop() );
-		};
-		
 		stack.add( this );
-		search( 1 );
+		searchStep( cache, stack, 1, xMin, yMin, xMax, yMax );
 		
 		return {
-			hasNext : function() { return !next.empty(); },
-			next : function() { search( 2 ); return next.pop(); }
+			hasNext : function() { return !cache.isEmpty(); },
+			next : function() { searchStep( cache, stack, 2, xMin, yMin, xMax, yMax ); return cache.pop(); }
 		};
-		
 	}
 	
-	// Lazy search
-	public function lazy_search( xmin : Float, ymin : Float, xmax : Float, ymax : Float ) : Iterator<T> {
-		var next = new List();
-		var stack = new List();
-		
-		var search_node = function( node : RjTree<T> ) {
-			if ( 0 < node._entries.length && node._overlapping_rectangle( xmin, ymin, xmax, ymax ) )
-				for ( e in node._entries )
-					switch ( e ) {
-						case RjTreeNode( child ):
-							stack.add( child );
-						case RjLeafNode( element, x, y ):
-							if ( _overlapping_point( x, y, xmin, ymin, xmax, ymax ) )
-								next.add( element );
-						default:
-							throw "Unkown node type";
-					}
-		};
-		
-		var search = function( stop : Int ) {
-			while ( stop > next.length && !stack.empty() )
-				search_node( stack.pop() );
-		};
-		
-		stack.add( this );
-		search( 1 );
-		
-		return {
-			hasNext : function() { return !next.empty(); },
-			next : function() { search( 2 ); return next.pop(); }
-		};
-		
+	static inline function iterateNode<A>( node : RjTree<A>, cache : List<A>, stack : List<RjTree<A>> ) : Void {
+		for ( ent in node.entries )
+			switch ( ent ) {
+				case Node( entChild ) :
+					stack.add( entChild );
+				case LeafPoint( entObject, entX, entY ) :
+					cache.add( entObject );
+				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+					cache.add( entObject );
+				default : throw 'Unexpected ' + ent;
+			}
 	}
 	
-	// Lazy iterator
-	public function triples() : Iterator<RjObject<T>> {
-		var next = new List();
-		var stack = new List();
-		
-		var search_node = function( node : RjTree<T> ) {
-			if ( 0 < node._entries.length )
-				for ( e in node._entries )
-					switch ( e ) {
-						case RjTreeNode( child ):
-							stack.add( child );
-						case RjLeafNode( element, x, y ):
-							next.add( new RjObject( x, y, element ) );
-						default:
-							throw "Unkown node type";
-					}
-		};
-		
-		var search = function( stop : Int ) {
-			while ( stop >= next.length && !stack.empty() )
-				search_node( stack.pop() );
-		};
-		
-		stack.add( this );
-		search( 0 );
-		
-		return {
-			hasNext : function() { return !next.empty(); },
-			next : function() { search( 1 ); return next.pop(); }
-		};
-		
+	static inline function iteratorStep<A>( cache : List<A>, stack : List<RjTree<A>>, minCacheSize : Int ) : Void {
+		while ( minCacheSize > cache.length && !stack.isEmpty() )
+			iterateNode( stack.pop(), cache, stack );
 	}
-	
-	// Lazy iterator
+		
 	public function iterator() : Iterator<T> {
-		var next = new List();
+		var cache = new List();
 		var stack = new List();
 		
-		var search_node = function( node : RjTree<T> ) {
-			if ( 0 < node._entries.length )
-				for ( e in node._entries )
-					switch ( e ) {
-						case RjTreeNode( child ):
-							stack.add( child );
-						case RjLeafNode( element, x, y ):
-							next.add( element );
-						default:
-							throw "Unkown node type";
-					}
-		};
-		
-		var search = function( stop : Int ) {
-			while ( stop >= next.length && !stack.empty() )
-				search_node( stack.pop() );
-		};
-		
 		stack.add( this );
-		search( 0 );
+		iteratorStep( cache, stack, 1 );
 		
 		return {
-			hasNext : function() { return !next.empty(); },
-			next : function() { search( 1 ); return next.pop(); }
+			hasNext : function() { return !cache.isEmpty(); },
+			next : function() { iteratorStep( cache, stack, 2 ); return cache.pop(); }
 		};
-		
 	}
 	
-	// Default search for a rectangle, returns a List
-	public function search_rectangle( xmin : Float, ymin : Float, xmax : Float, ymax : Float ) : List<T> {
-		var ans = new List();
-		_search_rectangle( xmin, ymin, xmax, ymax, function( elem : T ) {
-			ans.add(elem);
-		} );
-		return ans;
-	}
 	
-	// Flexible search for a rectangle
-	// Answer is produced as a side-effect of the insertion function
-	public function search_rectangleF( xmin : Float, ymin : Float, xmax : Float, ymax : Float, insertion : T -> Void ) : Void {
-		_search_rectangle( xmin, ymin, xmax, ymax, insertion );
-	}
+	// ---- updating
 	
-	// Shrink boundaries
-	function _shrink_boundaries() : Void {
-		var xmin = Math.POSITIVE_INFINITY;
-		var ymin = Math.POSITIVE_INFINITY;
-		var xmax = Math.NEGATIVE_INFINITY;
-		var ymax = Math.NEGATIVE_INFINITY;
-		_entries.iter( function( e : RjEntry<T> ) {
-			switch ( e ) {
-				case RjTreeNode( child ):
-					xmin = Math.min( xmin, child._xmin );
-					ymin = Math.min( ymin, child._ymin );
-					xmax = Math.max( xmax, child._xmax );
-					ymax = Math.max( ymax, child._ymax );
-				case RjLeafNode( element, x, y ):
-					xmin = Math.min( xmin, x );
-					ymin = Math.min( ymin, y );
-					xmax = Math.max( xmax, x );
-					ymax = Math.max( ymax, y );
-				default:
-					throw "Unkown node type";
+	inline function chooseEntryToInsert( xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Entry<T> {
+		var bestEntry = Empty;
+		var bestdA = Math.POSITIVE_INFINITY;
+		for ( ent in entries ) {
+			var da = switch ( ent ) {
+				case Node( entChild ) :
+					rectangleArea(
+						Math.min( xMin, entChild.xMin ),
+						Math.min( yMin, entChild.yMin ),
+						Math.max( xMax, entChild.xMax ),
+						Math.max( yMax, entChild.yMax )
+					) - entChild.area;
+				case LeafPoint( entObject, entX, entY ) :
+					rectangleArea(
+						Math.min( xMin, entX ),
+						Math.min( yMin, entY ),
+						Math.max( xMax, entX ),
+						Math.max( yMax, entY )
+					);
+				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+					rectangleArea(
+						Math.min( xMin, entX ),
+						Math.min( yMin, entY ),
+						Math.max( xMax, entX + entWidth ),
+						Math.max( yMax, entY + entHeight )
+					);
+				default : throw 'Unexpected ' + ent;
+			};
+			if ( da < bestdA ) {
+				bestdA = da;
+				bestEntry = ent;
 			}
-		} );
-		var updated = false;
-		var update = function( s, d ) {
-			if ( d != s ) {
-				d = s;
-				updated = true;
-			}
+		}
+		return bestEntry;
+	}
+	
+	function insertOnOverflow( ent : Entry<T>, reinsert : Bool ) : Void {
+		var p = switch ( ent ) {
+			case LeafPoint( entObject, entX, entY ) : chooseEntryToInsert( entX, entY, entX, entY ); 
+			case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : chooseEntryToInsert( entX, entY, entX + entWidth, entY + entHeight );
+			default : throw 'Unexpected ' + ent;
 		};
-		update( xmin, _xmin );
-		update( ymin, _ymin );
-		update( xmax, _xmax );
-		update( ymax, _ymax );
-		if ( null != _parent && updated )
-			_parent._shrink_boundaries();
-	}
-	
-	// Removes all objects that match the given (x, y)
-	public function remove( x : Float, y : Float, ?elem : Null<T> ) : Void {
-		if ( 0 < _entries.length && _overlapping_point( x, y, _xmin, _ymin, _xmax, _ymax ) ) {
-			var e;
-			for ( e in _entries ) {
-				switch ( e )  {
-					case RjTreeNode( child ):
-						child.remove( x, y, elem );
-					case RjLeafNode( element, ex, ey ):
-						if ( ( null == elem && ex == x && ey == y ) || ( null != elem && element == elem ) ) {
-							_entries.remove( e );
-							_shrink_boundaries();
-						}
-					default:
-						throw "Unkown node type";
-				}
-			}
-		}
-	}
-	
-	// Check for existance 
-	public function exists( x : Float, y : Float ) : Bool {
-		var e;
-		if ( 0 < _entries.length && _overlapping_point( x, y, _xmin, _ymin, _xmax, _ymax ) ) {
-			for ( e in _entries ) {
-				switch ( e )  {
-					case RjTreeNode( child ):
-						if ( child.exists( x, y ) )
-							return true;
-					case RjLeafNode( element, ex, ey ):
-						if ( ex == x && ey == y )
-							return true;
-					default:
-						throw "Unkown node type";
-				}
-			}
-		}
-		return false;
-	}
-	
-	// Search for exact element
-	// If multiple matches exists, will return anyone of them
-	public function search_element( x : Float, y : Float ) : Maybe<T> {
-		var e;
-		if ( 0 < _entries.length && _overlapping_point( x, y, _xmin, _ymin, _xmax, _ymax ) ) {
-			for ( e in _entries ) {
-				switch ( e ) {
-					case RjTreeNode( child ):
-						var c = child.search_element( x, y );
-						if ( Maybe.empty != c )
-							return c;
-					case RjLeafNode( element, ex, ey ):
-						if ( ex == x && ey == y )
-							return just( element );
-					default:
-						throw "Unkown node type";
-				}
-			}
-		}
-		return Maybe.empty;
-	}
-	
-	public function all() : List<T> {
-		var a = new List();
-		search_rectangleF( _xmin, _ymin, _xmax, _ymax, function( o : T ) { a.add( o ); } );
-		return a;
-	}
-	
-	// Expand boundaries to accommodate a given bounding box
-	function _expand_boundaries( xmin : Float, ymin : Float, xmax : Float, ymax : Float ) : Void {
-		var updated = false;
-		if ( xmin <= _xmin ) {
-			_xmin = xmin;
-			updated = true;
-		}
-		if ( ymin <= _ymin ) {
-			_ymin = ymin;
-			updated = true;
-		}
-		if ( xmax >= _xmax ) {
-			_xmax = xmax;
-			updated = true;
-		}
-		if ( ymax >= _ymax ) {
-			_ymax = ymax;
-			updated = true;
-		}
-		_area = _bounding_box_area( _xmin, _ymin, _xmax, _ymax );
-		if ( null != _parent && updated )
-			_parent._expand_boundaries( _xmin, _ymin, _xmax, _ymax );
-	}
-
-	// Choose where to insert an object
-	function _choose_RjEntry( x : Float, y : Float ) : RjEntry<T> {
-		var best_RjEntry = RjEmptyNode;
-		var best_da = Math.POSITIVE_INFINITY;
-		_entries.iter( function( e : RjEntry<T> ) {
-			var da = Math.POSITIVE_INFINITY; // area increment
-			switch ( e ) {
-				
-				case RjTreeNode( child ):
-					da = _bounding_box_area( Math.min( x, child._xmin ), Math.min( y, child._ymin ), Math.max( x, child._xmax ), Math.max( y, child._ymax ) ) - child._area;
-				
-				case RjLeafNode(element, ex, ey):
-					da = _bounding_box_area( Math.min( x, ex ), Math.min( y, ey ), Math.max( x, ex ), Math.max( y, ey ) );
-				
-				default:
-					throw "Unkown node type";
-				
-			}
-			if ( da < best_da ) {
-				best_da = da;
-				best_RjEntry = e;
-			}
-		} );
-		return best_RjEntry;
-	}
-	
-	// Insertion when node overflows
-	function _inserting_on_overflow( element : T, x : Float, y : Float, reinsert : Bool ) : Void {
-		var p = _choose_RjEntry( x, y ); // best entry
 		switch ( p ) {
-			
-			case RjTreeNode( child ):
-				child.insert( element, x, y ); // propagate...
-			
-			case RjLeafNode( elem, ex, ey ): // will split it...
-				var new_child = new RjTree( _bucket_size, this );
-				new_child._entries.push( RjLeafNode( element, x, y ) ); // new node first; simple insertion minus _expand_boundaries
-				_entries.remove( p );
-				_entries.push( RjTreeNode( new_child ) );
-				// now the splited node
+			case Empty : throw 'Unexpected ' + p;
+			case Node( pChild ) :
+				// propagate
+				pChild.insertEntry( ent );
+			default :
+				// split
+				var newChild = child( this );
+				entries.remove( p );
+				entries.push( Node( newChild ) );
+				// insert the new leaf
+				newChild.entries.push( ent );
+				// insert the original leaf
 				if ( reinsert )
-					_inserting_on_overflow( elem, ex, ey, false ); // splited node
+					insertOnOverflow( p, false );
 				else
-					new_child._entries.push( RjLeafNode( elem, ex, ey ) ); // splited node
-				new_child._expand_boundaries( Math.min( x, ex ), Math.min( y, ey ), Math.max( x, ex ), Math.max( y, ey ) );
-			
-			default:
-				throw "Unkown node type";
-			
+					newChild.entries.push( p );
+				newChild.computeBoundingBox();
 		}
 	}
 	
-	// Object insertion
-	public function insert( element : T, x : Float, y : Float ) : Void {
-		if ( _bucket_size > _entries.length ) {
-			// pushing an RjEntry
-			_entries.push( RjLeafNode( element, x, y ) );
-			_expand_boundaries( x, y, x, y );
+	function insertEntry( ent : Entry<T> ) : Void {
+		if ( entries.length < bucketSize ) {
+			// just push
+			entries.push( ent );
+			switch ( ent ) {
+				case LeafPoint( entObject, entX, entY ) : expandBoundingBox( entX, entY, entX, entY ); 
+				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : expandBoundingBox( entX, entY, entX + entWidth, entY + entHeight );
+				default : throw 'Unexpected ' + ent;
+			}
 		}
 		else {
 			// maximum number of entries per node reached
-			// spliting an RjEntry
-			_inserting_on_overflow( element, x, y, true );
+			// must split an entry
+			insertOnOverflow( ent, forcedReinsertion );
 		}
-		size++;
+		length++;
 	}
 	
-	// Clears all references to allow the garbage collector to work properly
-	public function destroy() {
-		_entries.iter( function( e : RjEntry<T> ) {
-			switch ( e ) {
-			  case RjTreeNode( child ):
-				  child.destroy();
-			  default:
-				  //just ignore
+	public function insertPoint( x : Float, y : Float, object : T ) : Void {
+		insertEntry( LeafPoint( object, x, y ) );
+	}
+	
+	public function insertRectangle( x : Float, y : Float, width : Float, height : Float, object : T ) : Void {
+		if ( width < 0 )
+			throw 'Width must be >= 0';
+		if ( height < 0 )
+			throw 'Height must be >= 0';
+		insertEntry( LeafRectangle( object, x, y, x + width, y + height ) );
+	}
+	
+	public function removePoint( x : Float, y : Float, ?object : Null<T> ) : Int {
+		var removed = 0;
+		if ( entries.length > 0 && pointOverlaps( x, y ) )
+			for ( ent in entries )
+				switch ( ent ) {
+					case Node( entChild ) : 
+						removed += entChild.removePoint( x, y, object );
+					case LeafPoint( entObject, entX, entY ) : 
+						if ( entX == x && entY == y && ( null == object || entObject == object ) ) {
+							entries.remove( ent );
+							removed++;
+							computeBoundingBox();
+						}
+					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : // nothing to do
+					default : throw 'Unexpected ' + ent;
+				}
+		length -= removed;
+		return removed;
+	}
+	
+	public function removeRectangle( x : Float, y : Float, width : Float, height : Float, ?object : T ) : Int {
+		if ( width < 0 )
+			throw 'Width must be >= 0';
+		if ( height < 0 )
+			throw 'Height must be >= 0';
+		var removed = 0;
+		if ( entries.length > 0 && rectangleOverlaps( x, y, x + width, y + height ) )
+			for ( ent in entries )
+				switch ( ent ) {
+					case Node( entChild ) : 
+						removed += entChild.removeRectangle( x, y, width, height, object );
+					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : 
+						if ( entX == x && entY == y && entWidth == width && height == height && ( null == object || entObject == object ) ) {
+							entries.remove( ent );
+							removed++;
+							computeBoundingBox();
+						}
+					case LeafPoint( entObject, entX, entY ) : // nothing to do
+					default : throw 'Unexpected ' + ent;
+				}
+		length -= removed;
+		return removed;
+	}
+	
+	public function removeObject( object : T ) : Int {
+		var removed = 0;
+		if ( entries.length > 0 )
+			for ( ent in entries )
+				switch ( ent ) {
+					case Node( entChild ) : 
+						removed += entChild.removeObject( object );
+					case LeafPoint( entObject, entX, entY ) : 
+						if ( entObject == object ) {
+							entries.remove( ent );
+							removed++;
+							computeBoundingBox();
+						}
+					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : 
+						if ( entObject == object ) {
+							entries.remove( ent );
+							removed++;
+							computeBoundingBox();
+						}
+					default : throw 'Unexpected ' + ent;
+				}
+		length -= removed;
+		return removed;
+	}
+	
+	
+	// ---- rectangle helpers
+	
+	static inline function rectangleArea( _xMin : Float, _yMin : Float, _xMax : Float, _yMax : Float ) : Float {
+		return ( _xMax - _xMin ) * ( _yMax - _yMin );
+	}
+	
+	inline function boundingBoxArea() : Float { return rectangleArea( xMin, yMin, xMax, yMax ); }
+	
+	static inline function pointOverlapsRectangle( x : Float, y : Float, _xMin : Float, _yMin : Float, _xMax : Float, _yMax : Float ) : Bool {
+		return x >= _xMin && x <= _xMax && y >= _yMin && y <= _yMax;
+	}	
+	
+	inline function pointOverlaps( x : Float, y : Float ) : Bool { return pointOverlapsRectangle( x, y, xMin, yMin, xMax, yMax ); }
+	
+	static inline function rectangleOverlapsRectangle( xMin : Float, yMin : Float, xMax : Float, yMax : Float, _xMin : Float, _yMin : Float, _xMax : Float, _yMax : Float ) : Bool {
+		return xMax >= _xMin && _xMax >= xMin && yMax >= _yMin && _yMax >= yMin;
+	}
+	
+	inline function rectangleOverlaps( xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Bool { return rectangleOverlapsRectangle( xMin, yMin, xMax, yMax, this.xMin, this.yMin, this.xMax, this.yMax ); }
+	
+	function computeBoundingBox() : Void {
+		var xMin = Math.POSITIVE_INFINITY;
+		var yMin = Math.POSITIVE_INFINITY;
+		var xMax = Math.NEGATIVE_INFINITY;
+		var yMax = Math.NEGATIVE_INFINITY;
+		
+		for ( ent in entries )
+			switch ( ent ) {
+				case Node( entChild ) : 
+					xMin = Math.min( xMin, entChild.xMin );
+					yMin = Math.min( yMin, entChild.yMin );
+					xMax = Math.max( xMax, entChild.xMax );
+					yMax = Math.max( yMax, entChild.yMax );
+				case LeafPoint( entChild, entX, entY ) :
+					xMin = Math.min( xMin, entX );
+					yMin = Math.min( yMin, entY );
+					xMax = Math.max( xMax, entX );
+					yMax = Math.max( yMax, entY );
+				case LeafRectangle( entChild, entX, entY, entWidth, entHeight ) :
+					xMin = Math.min( xMin, entX );
+					yMin = Math.min( yMin, entY );
+					xMax = Math.max( xMax, entX + entWidth );
+					yMax = Math.max( yMax, entY + entHeight );
+				default : throw 'Unexpected ' + ent;
 			}
-		} );
-		_parent = null;
-		_entries = null;
+		
+		var updated = false;
+		if ( xMin != this.xMin ) {
+			this.xMin = xMin;
+			updated = true;
+		}
+		if ( yMin != this.yMin ) {
+			this.yMin = yMin;
+			updated = true;
+		}
+		if ( xMax != this.xMax ) {
+			this.xMax = xMax;
+			updated = true;
+		}
+		if ( yMax != this.yMax ) {
+			this.yMax = yMax;
+			updated = true;
+		}
+		if ( updated ) {
+			area = boundingBoxArea();
+			if ( null != parent )
+				parent.computeBoundingBox();
+		}
 	}
 	
-	// Returns the maximum depth of the tree
-	public function analysis_maximum_depth() : Int {
-		var max_depth = 0;
-		_entries.iter( function( e : RjEntry<T> ) {
-			switch ( e ) {
-				case RjTreeNode( child ):
-					var depth = child.analysis_maximum_depth() + 1;
-					max_depth = ( depth > max_depth ) ? depth : max_depth;
-				default:
-					//just ignore
-			}
-		} );
-		return max_depth;
+	function expandBoundingBox( xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Void {
+		var updated = false;
+		if ( xMin < this.xMin ) {
+			this.xMin = xMin;
+			updated = true;
+		}
+		if ( yMin < this.yMin ) {
+			this.yMin = yMin;
+			updated = true;
+		}
+		if ( xMax > this.xMax ) {
+			this.xMax = xMax;
+			updated = true;
+		}
+		if ( yMax > this.yMax ) {
+			this.yMax = yMax;
+			updated = true;
+		}
+		if ( updated ) {
+			area = boundingBoxArea();
+			if ( null != parent )
+				parent.expandBoundingBox( xMin, yMin, xMax, yMax );
+		}
 	}
-	
-	// Returns the number of non RjLeafNode nodes
-	public function analysis_count_non_leaf() : Int {
-		var cnt = 0;
-		_entries.iter( function( e : RjEntry<T> ) {
-			switch ( e ) {
-				case RjTreeNode(child):
-					cnt += child.analysis_count_non_leaf() + 1;
-				default:
-					//just ignore
-			}
-		} );
-		return cnt;
-	}
-	
-	// Returns the load factor, ie, size to avaliable entries ratio
-	public function analysis_load_factor() : Float {
-		//return size / Math.pow(_bucket_size, analysis_maximum_depth() + 1);
-		return size / analysis_count_non_leaf() / _bucket_size ;
-	}
-	
-#if debug
-	
-	// Verify tree consistency
-	public function verify() : Bool {
-		for (e in _entries) {
-			switch ( e )  {
-			  case RjTreeNode( child ):
-				  if ( !child.verify() || child._xmin < _xmin || child._xmax > _xmax || child._ymin < _ymin || child._ymax > _ymax )
-					return false;
-			  case RjLeafNode( element, x, y ):
-				  if ( x < _xmin || x > _xmax || y < _ymin || y > _ymax )
-					return false;
-			  default:
-				  throw "Unkown node type";
-			}
-	    }
-		return true;
-	}
-	
-#end
 	
 }
 
-// RjEntry enumeration
-enum RjEntry<T> {
-	RjTreeNode( child : RjTree<T> );
-	RjLeafNode( element : T, x : Float, y : Float );
-	RjEmptyNode;
-}
-
-class RjObject<T> extends Vector {
-	public var data : T;
-	public function new( x : Float, y : Float, data : T ) {
-		super( x, y );
-		this.data = data;
-	}
+private enum Entry<T> {
+	Node( child : RjTree<T> );
+	LeafPoint( object : T, x : Float, y : Float );
+	LeafRectangle( object : T, x : Float, y : Float, width : Float, height : Float );
+	Empty;
 }
