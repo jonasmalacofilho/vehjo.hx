@@ -1,7 +1,6 @@
 package jonas.ds;
-import jonas.Vector;
 
-private typedef EntryContainer<T> = Array<Entry<T>>;
+import jonas.Vector;
 
 /**
  * R-Tree variant 'j'.
@@ -10,6 +9,7 @@ private typedef EntryContainer<T> = Array<Entry<T>>;
 	 * - no node splitting algorithm
 	 * - forced 1-level reinsertion on node overflow (from R*-Tree)
  * Copyright (c) 2012 Jonas Malaco Filho
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
  */
 class RjTree<T> {
 	
@@ -408,3 +408,5 @@ private enum Entry<T> {
 	LeafRectangle( object : T, x : Float, y : Float, width : Float, height : Float );
 	Empty;
 }
+
+private typedef EntryContainer<T> = Array<Entry<T>>;
