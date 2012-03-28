@@ -52,7 +52,7 @@ class RjTree<T> {
 	
 	// ---- construction
 	
-	public function new( ?bucketSize = 7, ?forcedReinsertion = true ) {
+	public function new( ?bucketSize = 8, ?forcedReinsertion = true ) {
 		this.bucketSize = bucketSize;
 		this.forcedReinsertion = forcedReinsertion;
 		
