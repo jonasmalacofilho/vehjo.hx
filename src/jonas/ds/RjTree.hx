@@ -3,11 +3,16 @@ package jonas.ds;
 import jonas.Vector;
 
 /**
- * R-Tree variant 'j'.
- * Changes from the original R-Tree:
-	 * - nodes may have simultaneously both node and object entries
-	 * - no node splitting algorithm
-	 * - forced 1-level reinsertion on node overflow (from R*-Tree)
+ * R-Tree variant 'j'
+ * 
+ * Differences from the original R-Tree:
+	 * nodes may have simultaneously both node and object entries, so no node splitting algorithm  
+	 * forced 1-level reinsertion on node overflow (from R*-Tree/can be turned off)
+ * 
+ * Compilation switches:
+ * RJTREE_DEBUG:
+	 * enables access to node level and bounding box information
+ * 
  * Copyright (c) 2012 Jonas Malaco Filho
  * Licensed under the MIT license. Check LICENSE.txt for more information.
  */
@@ -21,7 +26,7 @@ class RjTree<T> {
 	// parent node (null if root)
 	var parent : RjTree<T>;
 	// bucket entries (up to bucketSize)
-	var entries : EntryContainer<T>;
+	var entries : List<Entry<T>>;
 	// max num of entries in a bucket
 	public var bucketSize( default, null ) : Int;
 	// forced 1-level reinsertion on overflow
@@ -29,18 +34,19 @@ class RjTree<T> {
 	
 	
 	// ---- (sub) tree bounding box
-	
+	#if RJTREE_DEBUG
+	public var xMin( default, null ) : Float;
+	public var yMin( default, null ) : Float;
+	public var xMax( default, null ) : Float;
+	public var yMax( default, null ) : Float;
+	public var area( default, null ) : Float;
+	public var level( default, null ) : Int;
+	#else
 	var xMin : Float;
 	var yMin : Float;
 	var xMax : Float;
 	var yMax : Float;
 	var area : Float;
-	
-	
-	// ---- debug information
-	
-	#if RJTREE_DEBUG
-	public var level( default, null ) : Int;
 	#end
 	
 	
@@ -50,7 +56,7 @@ class RjTree<T> {
 		this.bucketSize = bucketSize;
 		this.forcedReinsertion = forcedReinsertion;
 		
-		entries = new EntryContainer();
+		entries = new List();
 		xMin = Math.POSITIVE_INFINITY;
 		yMin = Math.POSITIVE_INFINITY;
 		xMax = Math.NEGATIVE_INFINITY;
@@ -193,14 +199,14 @@ class RjTree<T> {
 				// split
 				var newChild = child( this );
 				entries.remove( p );
-				entries.push( Node( newChild ) );
+				entries.add( Node( newChild ) );
 				// insert the new leaf
-				newChild.entries.push( ent );
+				newChild.entries.add( ent );
 				// insert the original leaf
 				if ( reinsert )
 					insertOnOverflow( p, false );
 				else
-					newChild.entries.push( p );
+					newChild.entries.add( p );
 				newChild.computeBoundingBox();
 		}
 	}
@@ -208,7 +214,7 @@ class RjTree<T> {
 	function insertEntry( ent : Entry<T> ) : Void {
 		if ( entries.length < bucketSize ) {
 			// just push
-			entries.push( ent );
+			entries.add( ent );
 			switch ( ent ) {
 				case LeafPoint( entObject, entX, entY ) : expandBoundingBox( entX, entY, entX, entY ); 
 				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : expandBoundingBox( entX, entY, entX + entWidth, entY + entHeight );
@@ -400,6 +406,42 @@ class RjTree<T> {
 		}
 	}
 	
+	
+	// ---- debug api
+	#if RJTREE_DEBUG
+	
+	static inline function bBoxIterateNode<A>( node : RjTree<A>, cache : List<RjTreeBoundingBox>, stack : List<RjTree<A>> ) : Void {
+		cache.add( new RjTreeBoundingBox( node.xMin, node.yMin, node.xMax, node.yMax ) );
+		for ( ent in node.entries )
+			switch ( ent ) {
+				case Node( entChild ) :
+					stack.add( entChild );
+				case LeafPoint( entObject, entX, entY ) : // nothing to do here
+				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : // nothing to do here
+				default : throw 'Unexpected ' + ent;
+			}
+	}
+	
+	static inline function bBoxIteratorStep<A>( cache : List<RjTreeBoundingBox>, stack : List<RjTree<A>>, minCacheSize : Int ) : Void {
+		while ( minCacheSize > cache.length && !stack.isEmpty() )
+			bBoxIterateNode( stack.pop(), cache, stack );
+	}
+		
+	public function boudingBoxes() : Iterator<RjTreeBoundingBox> {
+		var cache = new List();
+		var stack = new List();
+		
+		stack.add( this );
+		bBoxIteratorStep( cache, stack, 1 );
+		
+		return {
+			hasNext : function() { return !cache.isEmpty(); },
+			next : function() { bBoxIteratorStep( cache, stack, 2 ); return cache.pop(); }
+		};
+	}
+	
+	#end
+	
 }
 
 private enum Entry<T> {
@@ -409,4 +451,33 @@ private enum Entry<T> {
 	Empty;
 }
 
-private typedef EntryContainer<T> = Array<Entry<T>>;
+#if RJTREE_DEBUG
+class RjTreeBoundingBox {
+	public var xMin( default, null ) : Float;
+	public var yMin( default, null ) : Float;
+	public var xMax( default, null ) : Float;
+	public var yMax( default, null ) : Float;
+	public function new( xMin, yMin, xMax, yMax ) {
+		this.xMin = xMin;
+		this.yMin = yMin;
+		this.xMax = xMax;
+		this.yMax = yMax;
+	}
+	public function toString() : String {
+		return '{(' + xMin + ',' + yMin + '),(' + xMax + ',' + yMax + ')}';
+	}
+}
+#end
+
+/*
+ * Possible changes:
+ * 
+ * 1) drop generic List:
+ *    minimize memory overhead and optimize entry iterators
+ *    vs. complicated code
+ * 
+ * 2) unbox Entry constructors:
+ *    minimal global performance gain and a possibly large optimization in hxcpp
+ *    vs. unsafe code (or unsafe casts)
+ * 
+ */

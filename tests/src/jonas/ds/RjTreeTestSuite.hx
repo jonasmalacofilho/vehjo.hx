@@ -18,7 +18,7 @@ class RjTreeTestSuite {
 	
 	public static function add_tests( t : jonas.unit.TestRunner ) {
 		t.add( new RjTreeComprehensiveTest() );
-		t.add( new RjTreeTest() );
+		//t.add( new RjTreeTest() );
 	}
 	
 	static function main() {
@@ -112,6 +112,30 @@ class RjTreeComprehensiveTest extends TestCase {
 		
 	}
 	
+	@description( 'basic removal test with up to 4 objects' )
+	public function testRemove1() {
+		assertEquals( 0, tree.removePoint( 0., 0. ), pos_infos( 'removed elements' ) );
+		assertEquals( 0, tree.length, pos_infos( 'tree.length' ) );
+		tree.insertPoint( 0., 0., 1 );
+		assertEquals( 1, tree.length, pos_infos( 'tree.length' ) );
+		assertEquals( 1, tree.removePoint( 0., 0. ), pos_infos( 'removed elements' ) );
+		assertEquals( 0, tree.length, pos_infos( 'tree.length' ) );
+		tree.insertPoint( 1., -1., 2 );
+		tree.insertRectangle( 1., -1., 10., 10., 2 );
+		tree.insertPoint( 1., -1., -10 );
+		assertEquals( 3, tree.length, pos_infos( 'tree.length' ) );
+		assertEquals( 2, tree.removeObject( 2 ), pos_infos( 'removed elements (by object)' ) );
+		assertEquals( 1, tree.length, pos_infos( 'tree.length' ) );
+		tree.insertPoint( 1., -1., 2 );
+		tree.insertPoint( 1., -1., 2 );
+		tree.insertPoint( 1., -10., 2 );
+		assertEquals( 4, tree.length, pos_infos( 'tree.length' ) );
+		assertEquals( 2, tree.removePoint( 1., -1., 2 ), pos_infos( 'removed elements' ) );
+		assertEquals( 2, tree.length, pos_infos( 'tree.length' ) );
+		assertEquals( 1, tree.removePoint( 1., -1. ), pos_infos( 'removed elements' ) );
+		assertEquals( 1, tree.length, pos_infos( 'tree.length' ) );
+		assertEquals( 0, tree.removePoint( 0., 0. ), pos_infos( 'removed elements' ) );
+	}
 }
 
 private class RjTreeTest extends TestCase {
