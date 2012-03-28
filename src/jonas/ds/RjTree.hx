@@ -64,16 +64,16 @@ class RjTree<T> {
 		area = 0.;
 		length = 0;
 		#if RJTREE_DEBUG
-		if ( null != parent )
-			level = parent.level + 1;
-		else
-			level = 0;
+		level = 0;
 		#end
 	}
 	
 	inline static function child<A>( parent : RjTree<A> ) : RjTree<A> {
 		var r = new RjTree( parent.bucketSize, parent.forcedReinsertion );
 		r.parent = parent;
+		#if RJTREE_DEBUG
+		r.level = parent.level + 1;
+		#end
 		return r;
 	}
 	
@@ -418,7 +418,7 @@ class RjTree<T> {
 	#if RJTREE_DEBUG
 	
 	static inline function bBoxIterateNode<A>( node : RjTree<A>, cache : List<RjTreeBoundingBox>, stack : List<RjTree<A>> ) : Void {
-		cache.add( new RjTreeBoundingBox( node.xMin, node.yMin, node.xMax, node.yMax ) );
+		cache.add( new RjTreeBoundingBox( node.xMin, node.yMin, node.xMax, node.yMax, node.area, node.level ) );
 		for ( ent in node.entries )
 			switch ( ent ) {
 				case Node( entChild ) :
@@ -464,11 +464,15 @@ class RjTreeBoundingBox {
 	public var yMin( default, null ) : Float;
 	public var xMax( default, null ) : Float;
 	public var yMax( default, null ) : Float;
-	public function new( xMin, yMin, xMax, yMax ) {
+	public var area( default, null ) : Float;
+	public var level( default, null ) : Int;
+	public function new( xMin, yMin, xMax, yMax, area, level ) {
 		this.xMin = xMin;
 		this.yMin = yMin;
 		this.xMax = xMax;
 		this.yMax = yMax;
+		this.area = area;
+		this.level = level;
 	}
 	public function toString() : String {
 		return '{(' + xMin + ',' + yMin + '),(' + xMax + ',' + yMax + ')}';
