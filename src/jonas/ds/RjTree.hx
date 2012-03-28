@@ -101,7 +101,14 @@ class RjTree<T> {
 			searchNode( stack.pop(), cache, stack, xMin, yMin, xMax, yMax );
 	}
 	
-	public function search( xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Iterator<T> {
+	public function search( xMin : Float, yMin : Float, width : Float, height : Float ) : Iterator<T> {
+		if ( width < 0 )
+			throw 'Width must be >= 0';
+		if ( height < 0 )
+			throw 'Height must be >= 0';
+		var xMax = xMin + width;
+		var yMax = yMin + height;
+			
 		var cache = new List();
 		var stack = new List();
 		
