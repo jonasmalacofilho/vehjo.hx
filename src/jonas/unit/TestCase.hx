@@ -63,7 +63,14 @@ class TestCase extends haxe.unit.TestCase {
 	}
 	
 	function configure( name : String ) : Void {
-		
+		var configuration = _configs.get( name );
+		if ( null == configuration && _config_current != _config_default)
+			configuration = _configs.get( _config_default );
+		if ( null != configuration )
+			for ( f in Reflect.fields( this ) )
+				if ( f.substr( 0, 6 ) == 'config' && Reflect.field( configuration, f ) != null )
+					Reflect.setField( this, f, Reflect.field( configuration, f ) );
+			
 	}
 	
 	override function assertTrue( b:Bool, ?c : PosInfos ) : Void {
