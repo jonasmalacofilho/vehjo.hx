@@ -23,10 +23,11 @@
 	<compilerflag name="--macro haxei.Compiler.register( 'pack2', true, [ 'haxei' ] )" />
 	<compilerflag name="--macro haxei.Compiler.register( '', false, [ 'Test' ] )" />
 	<compilerflag name="--macro haxei.Compiler.register( 'haxe', true, [ 'haxe.remoting', 'haxe.web', 'haxe.unit', 'haxe.macro', 'haxe.TimerQueue' ] )" />
-	<compilerflag name="--macro haxei.Compiler.register( 'nme', false )" />
-	<compilerflag name="--macro haxei.Compiler.register( 'jonas', true, [ 'jonas.unit' ] )" />
-	<compilerflag name="--macro haxei.Compiler.register( 'neko', true, [ 'neko._std' ] )" if="neko"/>
-	<compilerflag name="--macro haxei.Compiler.register( 'cpp', true, [ 'cpp._std' ] )" if="cpp"/>
+	<compilerflag name="--macro haxei.Compiler.register( 'nme', false, [ 'nme.Memory' ] )" />
+	<compilerflag name="--macro haxei.Compiler.register( 'jonas', true, [ 'jonas.unit', 'jonas.scrapper' ] )" />
+	<compilerflag name="--macro haxei.Compiler.register( 'jonas.scrapper', true )" if="neko" />
+	<compilerflag name="--macro haxei.Compiler.register( 'neko', true, [ 'neko._std' ] )" if="neko" />
+	<compilerflag name="--macro haxei.Compiler.register( 'cpp', true, [ 'cpp._std' ] )" if="cpp" />
 	
 	<!-- Windows app: hide console -->
 	<setenv name="no_console" value="1" />
