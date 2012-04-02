@@ -1,6 +1,6 @@
 package jonas.scraper.app.ch;
 
-import jonas.db.MutexConnection;
+import jonas.db.SharedConnection;
 import jonas.scraper.Dispatcher;
 import jonas.scraper.Scraper;
 import neko.db.Sqlite;
@@ -12,9 +12,9 @@ import neko.db.Sqlite;
  */
 class CalvinAndHobbes extends Scraper {
 	
-	var db : MutexConnection;
+	var db : SharedConnection;
 
-	public function new( db : MutexConnection ) {
+	public function new( db : SharedConnection ) {
 		this.db = db;
 		super( 'CalvinAndHobbesMain' );
 	}
@@ -23,6 +23,7 @@ class CalvinAndHobbes extends Scraper {
 		var cur = new Date( 1985, 10, 18, 12, 0, 0 );
 		var end = new Date( 1995, 11, 31, 12, 0, 0 );
 		//var cur = new Date( 2012, 02, 01, 12, 0, 0 );
+		//var end = new Date( 2012, 02, 05, 12, 0, 0 );
 		//var end = new Date( 2012, 02, 31, 12, 0, 0 );
 		while ( cur.getTime() <= end.getTime() ) {
 			//trace( cur );
@@ -35,10 +36,9 @@ class CalvinAndHobbes extends Scraper {
 	static function main() {
 		var db = Sqlite.open( 'CalvinAndHobbes.db3' );
 		var dis = new Dispatcher();
-		dis.addScraper( new CalvinAndHobbes( new MutexConnection( db ) ) );
-		trace( dis.run( 32 ) );
+		dis.addScraper( new CalvinAndHobbes( new SharedConnection( db ) ) );
+		trace( dis.run( 64 ) );
 		//trace( dis.run( 1 ) );
-		trace( dis.completed.get( 'CalvinAndHobbes-1995-12-31' ) );
 		db.close();
 	}
 	

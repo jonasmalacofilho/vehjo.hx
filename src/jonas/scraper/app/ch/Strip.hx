@@ -1,7 +1,7 @@
 package jonas.scraper.app.ch;
 
 import haxe.Timer;
-import jonas.db.MutexConnection;
+import jonas.db.SharedConnection;
 import jonas.net.Http;
 import jonas.NumberPrinter;
 import jonas.scraper.Dispatcher;
@@ -19,11 +19,11 @@ class Strip extends Scraper {
 	var year : Int;
 	var month : Int;
 	var day : Int;
-	var db : MutexConnection;
+	var db : SharedConnection;
 	var png : String;
 	var url : String;
 
-	public function new( db : MutexConnection, year : Int, month : Int, day : Int, url : String ) {
+	public function new( db : SharedConnection, year : Int, month : Int, day : Int, url : String ) {
 		this.db = db;
 		this.year = year;
 		this.month = month;

@@ -1,6 +1,6 @@
 package jonas.scraper.app.ch;
 
-import jonas.db.MutexConnection;
+import jonas.db.SharedConnection;
 import jonas.net.Http;
 import jonas.NumberPrinter;
 import jonas.scraper.Dispatcher;
@@ -17,11 +17,11 @@ class Linker extends Scraper {
 	var year : Int;
 	var month : Int;
 	var day : Int;
-	var db : MutexConnection;
+	var db : SharedConnection;
 	var png : String;
 	var stripUrl : String;
 
-	public function new( db : MutexConnection, year : Int, month : Int, day : Int ) {
+	public function new( db : SharedConnection, year : Int, month : Int, day : Int ) {
 		this.db = db;
 		this.year = year;
 		this.month = month;
