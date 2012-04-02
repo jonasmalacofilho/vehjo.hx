@@ -1,4 +1,4 @@
-package jonas.scrapper;
+package jonas.scraper;
 
 import haxe.PosInfos;
 import haxe.Timer;
@@ -9,11 +9,16 @@ import neko.vm.Thread;
 import neko.vm.Ui;
 import neko.Lib;
 
+/**
+ * Scraper dispatcher
+ * Copyright (c) 2012 Jonas Malaco Filho
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
+ */
 class Dispatcher {
 	
-	var jobs : Hash<Scrapper>;
-	var working : Hash<Scrapper>;
-	public var completed : Hash<Scrapper>;
+	var jobs : Hash<Scraper>;
+	var working : Hash<Scraper>;
+	public var completed : Hash<Scraper>;
 	
 	var mutex : Mutex;
 
@@ -24,7 +29,7 @@ class Dispatcher {
 		mutex = new Mutex();
 	}
 	
-	public function addScrapper( s : Scrapper ) : Scrapper {
+	public function addScraper( s : Scraper ) : Scraper {
 		mutex.acquire();
 		jobs.set( s.name, s );
 		mutex.release();
@@ -55,7 +60,7 @@ class Dispatcher {
 		return Timer.stamp() - started;
 	}
 	
-	function getNewJob() : Null<Scrapper> {
+	function getNewJob() : Null<Scraper> {
 		mutex.acquire();
 		var it = jobs.keys();
 		var job = it.hasNext() ? jobs.get( it.next() ) : null;
@@ -70,7 +75,7 @@ class Dispatcher {
 		return job;
 	}
 	
-	function returnJob( job : Scrapper ) : Void {
+	function returnJob( job : Scraper ) : Void {
 		if ( job.succeeded ) {
 			job.finished = Timer.stamp();
 			mutex.acquire();

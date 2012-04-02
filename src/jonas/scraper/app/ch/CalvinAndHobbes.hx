@@ -1,12 +1,16 @@
-package jonas.scrapper.app.ch;
+package jonas.scraper.app.ch;
 
-import haxe.Http;
 import jonas.db.MutexConnection;
-import jonas.scrapper.Dispatcher;
-import jonas.scrapper.Scrapper;
+import jonas.scraper.Dispatcher;
+import jonas.scraper.Scraper;
 import neko.db.Sqlite;
 
-class CalvinAndHobbes extends Scrapper {
+/**
+ * Calvin and Hobbes comic strips scraping
+ * Copyright (c) 2012 Jonas Malaco Filho
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
+ */
+class CalvinAndHobbes extends Scraper {
 	
 	var db : MutexConnection;
 
@@ -22,7 +26,7 @@ class CalvinAndHobbes extends Scrapper {
 		//var end = new Date( 2012, 02, 31, 12, 0, 0 );
 		while ( cur.getTime() <= end.getTime() ) {
 			//trace( cur );
-			children.push( dispatcher.addScrapper( new Linker( db, cur.getFullYear(), cur.getMonth() + 1, cur.getDate() ) ).name );
+			children.push( dispatcher.addScraper( new Linker( db, cur.getFullYear(), cur.getMonth() + 1, cur.getDate() ) ).name );
 			cur = DateTools.delta( cur, DateTools.days( 1 ) );
 		}
 		succeeded = true;
@@ -31,7 +35,7 @@ class CalvinAndHobbes extends Scrapper {
 	static function main() {
 		var db = Sqlite.open( 'CalvinAndHobbes.db3' );
 		var dis = new Dispatcher();
-		dis.addScrapper( new CalvinAndHobbes( new MutexConnection( db ) ) );
+		dis.addScraper( new CalvinAndHobbes( new MutexConnection( db ) ) );
 		trace( dis.run( 32 ) );
 		//trace( dis.run( 1 ) );
 		trace( dis.completed.get( 'CalvinAndHobbes-1995-12-31' ) );

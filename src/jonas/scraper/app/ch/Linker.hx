@@ -1,13 +1,18 @@
-package jonas.scrapper.app.ch;
+package jonas.scraper.app.ch;
 
-import jonas.net.Http;
-import haxe.Timer;
 import jonas.db.MutexConnection;
+import jonas.net.Http;
 import jonas.NumberPrinter;
-import jonas.scrapper.Dispatcher;
-import jonas.scrapper.Scrapper;
+import jonas.scraper.Dispatcher;
+import jonas.scraper.Scraper;
 
-class Linker extends Scrapper {
+/**
+ * Calvin and Hobbes comic strips scraping
+ * Linker: visit the site and extract the strip url
+ * Copyright (c) 2012 Jonas Malaco Filho
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
+ */
+class Linker extends Scraper {
 	
 	var year : Int;
 	var month : Int;
@@ -56,7 +61,7 @@ class Linker extends Scrapper {
 	override function run( dispatcher : Dispatcher ) : Void {
 		get();
 		if ( succeeded )
-			children.push( dispatcher.addScrapper( new Strip( db, year, month, day, stripUrl ) ).name );
+			children.push( dispatcher.addScraper( new Strip( db, year, month, day, stripUrl ) ).name );
 	}
 	
 	

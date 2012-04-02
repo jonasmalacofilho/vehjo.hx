@@ -1,7 +1,13 @@
-package jonas.scrapper;
+package jonas.scraper;
+
 import neko.vm.Mutex;
 
-class Scrapper {
+/**
+ * Base scraper
+ * Copyright (c) 2012 Jonas Malaco Filho
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
+ */
+class Scraper {
 	
 	public var name : String;
 	public var timeout : Float;

@@ -1,14 +1,20 @@
-package jonas.scrapper.app.ch;
+package jonas.scraper.app.ch;
 
 import haxe.Timer;
 import jonas.db.MutexConnection;
-import jonas.NumberPrinter;
-import jonas.scrapper.Dispatcher;
-import jonas.scrapper.Scrapper;
-import neko.io.File;
 import jonas.net.Http;
+import jonas.NumberPrinter;
+import jonas.scraper.Dispatcher;
+import jonas.scraper.Scraper;
+import neko.io.File;
 
-class Strip extends Scrapper {
+/**
+ * Calvin and Hobbes comic strips scraping
+ * Strip: get and save the strip
+ * Copyright (c) 2012 Jonas Malaco Filho
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
+ */
+class Strip extends Scraper {
 	
 	var year : Int;
 	var month : Int;
