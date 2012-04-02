@@ -1,5 +1,10 @@
 package jonas.net;
 
+/**
+ * Http extension
+ * Copyright (c) 2012 Jonas Malaco Filho
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
+ */
 class Http extends haxe.Http {
 
 	#if (neko || php || cpp)
