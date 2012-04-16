@@ -101,6 +101,6 @@ class MathExtension
 	}
 	
 	public static inline var INT_MAX = #if neko 0x3fffffff #else 0x7fffffff #end;
-	public static inline var INT_MIN = #if neko 0x40000000 #else 0x80000000 #end;
+	public static inline var INT_MIN = #if neko - 0x3fffffff - 1 #else 0x80000000 #end;
 	
 }

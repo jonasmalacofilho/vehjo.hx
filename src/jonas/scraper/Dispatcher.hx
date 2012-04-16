@@ -1,7 +1,6 @@
 package jonas.scraper;
 
 import haxe.PosInfos;
-import neko.Sys;
 import neko.vm.Deque;
 import neko.vm.Mutex;
 import neko.vm.Thread;

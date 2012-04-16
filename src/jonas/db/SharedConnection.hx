@@ -21,7 +21,7 @@ class SharedConnection implements Connection {
 	}
 	
 	public inline function request( s ) { mutex.acquire(); var res = cnx.request( s ); mutex.release(); return res; }
-	public function close() { throw 'Forbiden'; }
+	public function close() { mutex.acquire(); cnx.close(); cnx = null; mutex.release(); }
 	public inline function escape( s ) { return cnx.escape( s ); }
 	public inline function quote( s ) { return cnx.quote( s ); } 
 	public inline function addValue( s, v : Dynamic ) { cnx.addValue( s, v ); }

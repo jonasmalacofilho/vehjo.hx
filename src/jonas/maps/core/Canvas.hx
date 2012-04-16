@@ -6,7 +6,6 @@ import nme.display.MovieClip;
 import nme.display.Sprite;
 import nme.events.MouseEvent;
 import nme.Lib;
-import nme.ui.Mouse;
 
 /*
  * Canvas object, container of layers and event/input handler
