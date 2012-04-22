@@ -26,10 +26,10 @@
 	
 	<!-- haxei configuration -->
 	<compilerflag name="--macro haxei.Compiler.register( 'jonas', true, [ 'jonas.unit', 'jonas.maps' ] )" />
-	<compilerflag name="--macro haxei.Compiler.register( 'nme', false )" />
+	<compilerflag name="--macro haxei.Compiler.register( 'nme', false, [ 'nme.Memory' ] )" />
 	
 	<haxedef name="RJTREE_DEBUG" />
-	<haxedef name="JMAPS_TRACE_RTREE" />
+	<!--haxedef name="JMAPS_TRACE_RTREE" /-->
 	
 	<!-- Windows app: hide console -->
 	<!--<setenv name="no_console" value="1" />-->

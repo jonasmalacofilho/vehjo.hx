@@ -138,8 +138,8 @@ class Main {
 		
 		var layer1 = new PointLayer( encoder1 );
 		var shapes = new IntHash();
-		layer1.fillColor = function( o ) { return 0; };
-		//layer1.fillColor = color;
+		//layer1.fillColor = function( o ) { return 0; };
+		layer1.fillColor = color;
 		layer1.lineColor = layer1.fillColor;
 		layer1.style = function( o ) { return shapes.get( o ); };
 		for ( i in 0...1000 )
