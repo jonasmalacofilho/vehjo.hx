@@ -14,7 +14,6 @@ class BackgroundText {
 	
 	public var textField( default, null ) : TextField;
 	
-	var buffer : List<String>;
 	var maxBufferSize : Int;
 	
 	public function new( width : Float, height : Float, parent : Sprite ) {
@@ -29,16 +28,17 @@ class BackgroundText {
 		textField.width = width;
 		textField.height = height;
 		
-		buffer = new List();
-		maxBufferSize = 300;
+		maxBufferSize = 10000;
 	}
 
 	public function println( s : String ) : Void {
-		buffer.add( s );
-		while ( buffer.length > maxBufferSize )
-			buffer.pop();
-		textField.text = buffer.join( '\n' );
-		textField.scrollV = textField.numLines;
+		s += '\n';
+		if ( s.length > maxBufferSize )
+			s = s.substr( s.length - maxBufferSize - 1 );
+		if ( textField.text.length + s.length > maxBufferSize )
+			textField.text = textField.text.substr( textField.text.length + s.length - maxBufferSize - 1 );
+		textField.text += s;
+		textField.scrollV = textField.numLines - Std.int( textField.height / textField.textHeight * textField.numLines ) + 1;
 	}
 	
 	public function customTrace( v, ?p : PosInfos ) {
