@@ -492,7 +492,7 @@ class DigraphStructuralTest<D : Digraph<V, A>, V : Vertex, A : Arc> extends Test
 		for ( i in 0...20 )
 			d.add_vertex( vertex() );
 		var ref = new List();
-		for ( i in 0...20 ) {
+		for ( i in 1...20 ) {
 			var wi;
 			do { wi = Std.random( 20 ); } while ( wi == i );
 			d.add_arc( d.get_vertex( i ), d.get_vertex( wi ), arc() );

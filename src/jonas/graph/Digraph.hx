@@ -217,14 +217,16 @@ class Digraph<V : Vertex, A : Arc> {
 	}
 	
 	public function arcs() : Iterator<A> {
-		var i = 0;
-		var p : A = cast ( i < nV ? vs[i].adj : null );
+		var i = -1;
+		var p : A = null;
+		while ( null == p && ++i < nV )
+			p = cast vs[i].adj;
 		return {
 			hasNext : function() { return null != p; },
 			next : function() {
 				var q = p;
 				p = cast p._next;
-				if ( null == p && ++i < nV )
+				while ( null == p && ++i < nV )
 					p = cast vs[i].adj;
 				return q;
 			}
