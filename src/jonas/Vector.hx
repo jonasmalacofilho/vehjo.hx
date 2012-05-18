@@ -44,6 +44,10 @@ class Vector {
 		return new Vector( x - v.x, y - v.y );
 	}
 	
+	public inline function dotProduct( v : Vector ) : Float {
+		return x * v.x + y * v.y;
+	}
+	
 	public inline function rev() : Vector {
 		return new Vector( -x, -y );
 	}
