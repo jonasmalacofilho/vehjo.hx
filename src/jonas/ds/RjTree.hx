@@ -180,7 +180,7 @@ class RjTree<T> {
 						Math.min( yMin, entY ),
 						Math.max( xMax, entX + entWidth ),
 						Math.max( yMax, entY + entHeight )
-					);
+					) - rectangleArea( entX, entY, entX + entWidth, entY + entHeight );
 				default : throw 'Unexpected ' + ent;
 			};
 			if ( da < bestdA ) {
