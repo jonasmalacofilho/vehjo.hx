@@ -4,8 +4,9 @@ import haxe.io.Bytes;
 import haxe.io.Eof;
 import jonas.ds.HashTable;
 import jonas.unit.TestCase;
-import neko.io.File;
-import neko.Lib;
+#if ( neko || cpp || php )
+import sys.io.File;
+#end
 
 /*
  * HashTable test suite
@@ -38,7 +39,9 @@ class HashTableTestSuite {
 		t.add( new StringHashTableTest() );
 		t.add( new OtherStringHashTableTest() );
 		t.add( new LongStringHashTableTest() );
+		#if ( neko || cpp || php )
 		t.add( new PracticalStringHashTableTest() );
+		#end
 	}
 
 	static function main() {
@@ -218,6 +221,7 @@ class OtherStringHashTableTest extends StringHashTableTest {
 	
 }
 
+#if ( neko || cpp || php )
 class PracticalStringHashTableTest extends TestCase {
 	
 	static inline function count( h : Dynamic, k : String ) : Void {
@@ -273,3 +277,4 @@ class PracticalStringHashTableTest extends TestCase {
 	public function test_bible_pt() { return run( '../biblia.txt' ); }
 	
 }
+#end

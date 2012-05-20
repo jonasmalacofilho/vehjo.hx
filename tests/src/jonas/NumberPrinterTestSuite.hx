@@ -119,9 +119,9 @@ class NumberPrinterTestSuite extends TestCase
 	
 	public function test_printInteger_withLargeFloats()
 	{
-		var r = '^-348368361122323((22312123)|(0{8}))$';
+		var r = '^-348368361122323((22312123)|(220{6})|(0{8}))$';
 		var a : Float = -34836836112232322312123.42;
-		assertMatch('^-348368361122323((22312123)|(0{8}))$', a.printInteger());
+		assertMatch('^-348368361122323((22312123)|(220{6})|(0{8}))$', a.printInteger());
 	}
 	
 	public function test_printInteger_withSmallFloats()
@@ -162,9 +162,9 @@ class NumberPrinterTestSuite extends TestCase
 	
 	public function test_printDecimal_withLargeFloats()
 	{
-		var r = '^-348368361122323((22312123)|(0{8}))\\.0$';
+		var r = '^-348368361122323((22312123)|(220{6})|(0{8}))\\.0$';
 		var a : Float = -34836836112232322312123.42;
-		assertMatch('^-348368361122323((22312123)|(0{8}))\\.0$', a.printDecimal());
+		assertMatch('^-348368361122323((22312123)|(220{6})|(0{8}))\\.0$', a.printDecimal());
 	}
 	
 	public function test_printDecimal_withSmallFloats()
