@@ -79,26 +79,24 @@ class RjTree<T> {
 	
 	
 	// --- querying
-	
-	static inline function searchNode<A>( node : RjTree<A>, cache : List<A>, stack : List<RjTree<A>>, xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Void {
-		if ( node.entries.length > 0 && node.rectangleOverlaps( xMin, yMin, xMax, yMax ) )
-			for ( ent in node.entries )
-				switch ( ent ) {
-					case Node( entChild ) :
-						stack.add( entChild );
-					case LeafPoint( entObject, entX, entY ) :
-						if ( pointOverlapsRectangle( entX, entY, xMin, yMin, xMax, yMax ) )
-							cache.add( entObject );
-					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
-						if ( rectangleOverlapsRectangle( entX, entY, entX + entWidth, entY + entHeight, xMin, yMin, xMax, yMax ) )
-							cache.add( entObject );
-					default : throw 'Unexpected ' + ent;
-				}
-	}
-	
+
 	static inline function searchStep<A>( cache : List<A>, stack : List<RjTree<A>>, minCacheSize : Int, xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Void {
-		while ( minCacheSize > cache.length && !stack.isEmpty() )
-			searchNode( stack.pop(), cache, stack, xMin, yMin, xMax, yMax );
+		while ( minCacheSize > cache.length && !stack.isEmpty() ) {
+			var node = stack.pop();
+			if ( node.entries.length > 0 && node.rectangleOverlaps( xMin, yMin, xMax, yMax ) )
+				for ( ent in node.entries )
+					switch ( ent ) {
+						case Node( entChild ) :
+							stack.add( entChild );
+						case LeafPoint( entObject, entX, entY ) :
+							if ( pointOverlapsRectangle( entX, entY, xMin, yMin, xMax, yMax ) )
+								cache.add( entObject );
+						case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+							if ( rectangleOverlapsRectangle( entX, entY, entX + entWidth, entY + entHeight, xMin, yMin, xMax, yMax ) )
+								cache.add( entObject );
+						default : throw 'Unexpected ' + ent;
+					}
+		}
 	}
 	
 	public function search( xMin : Float, yMin : Float, width : Float, height : Float ) : Iterator<T> {
@@ -121,22 +119,18 @@ class RjTree<T> {
 		};
 	}
 	
-	static inline function iterateNode<A>( node : RjTree<A>, cache : List<A>, stack : List<RjTree<A>> ) : Void {
-		for ( ent in node.entries )
-			switch ( ent ) {
-				case Node( entChild ) :
-					stack.add( entChild );
-				case LeafPoint( entObject, entX, entY ) :
-					cache.add( entObject );
-				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
-					cache.add( entObject );
-				default : throw 'Unexpected ' + ent;
-			}
-	}
-	
 	static inline function iteratorStep<A>( cache : List<A>, stack : List<RjTree<A>>, minCacheSize : Int ) : Void {
 		while ( minCacheSize > cache.length && !stack.isEmpty() )
-			iterateNode( stack.pop(), cache, stack );
+			for ( ent in stack.pop().entries )
+				switch ( ent ) {
+					case Node( entChild ) :
+						stack.add( entChild );
+					case LeafPoint( entObject, entX, entY ) :
+						cache.add( entObject );
+					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+						cache.add( entObject );
+					default : throw 'Unexpected ' + ent;
+				}
 	}
 		
 	public function iterator() : Iterator<T> {
