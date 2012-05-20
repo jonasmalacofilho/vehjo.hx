@@ -1,6 +1,13 @@
 package ;
 
+#if neko
 import neko.Lib;
+#elseif cpp
+import cpp.Lib;
+#elseif js
+import js.Lib;
+import js.Dom.Event;
+#end
 
 /*
  * jonas-haxe tests
@@ -52,9 +59,9 @@ class Tests {
 	}
 	
 	static function main() {
-		Lib.println( 'Tests' );
-		Lib.println( 'Copyright (c) 2012 Jonas Malaco Filho' );
-		Lib.println( 'Powered by haXe (haxe.org) and neko (nekovm.org)' );
+		trace( 'Tests' );
+		trace( 'Copyright (c) 2012 Jonas Malaco Filho' );
+		trace( 'Powered by haXe (haxe.org) and neko (nekovm.org)' );
 		new Tests();
 	}
 	
