@@ -155,36 +155,44 @@ class RjTree<T> {
 	
 	// ---- updating
 	
+	inline function evaluteCandidateEntry( ent : Entry<T>, xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Float {
+		var a0 = Math.NaN;
+		var xMin1 = Math.NaN;
+		var yMin1 = Math.NaN;
+		var xMax1 = Math.NaN;
+		var yMax1 = Math.NaN;
+		switch ( ent ) {
+			case Node( entChild ) :
+				a0 = entChild.area;
+				xMin1 = Math.min( xMin, entChild.xMin );
+				yMin1 = Math.min( yMin, entChild.yMin );
+				xMax1 = Math.max( xMax, entChild.xMax );
+				yMax1 = Math.max( yMax, entChild.yMax );
+			case LeafPoint( entObject, entX, entY ) :
+				a0 = 0.;
+				xMin1 = Math.min( xMin, entX );
+				yMin1 = Math.min( yMin, entY );
+				xMax1 = Math.max( xMax, entX );
+				yMax1 = Math.max( yMax, entY );
+			case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+				a0 = rectangleArea( entX, entY, entX + entWidth, entY + entHeight );
+				xMin1 = Math.min( xMin, entX );
+				yMin1 = Math.min( yMin, entY );
+				xMax1 = Math.max( xMax, entX + entWidth );
+				yMax1 = Math.max( yMax, entY + entHeight );
+			default : throw 'Unexpected ' + ent;
+		}
+		var a1 = rectangleArea( xMin1, yMin1, xMax1, yMax1 );
+		return a1 - a0; // basic stuff
+	}
+	
 	inline function chooseEntryToInsert( xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Entry<T> {
 		var bestEntry = Empty;
-		var bestdA = Math.POSITIVE_INFINITY;
+		var best = Math.POSITIVE_INFINITY;
 		for ( ent in entries ) {
-			var da = switch ( ent ) {
-				case Node( entChild ) :
-					rectangleArea(
-						Math.min( xMin, entChild.xMin ),
-						Math.min( yMin, entChild.yMin ),
-						Math.max( xMax, entChild.xMax ),
-						Math.max( yMax, entChild.yMax )
-					) - entChild.area;
-				case LeafPoint( entObject, entX, entY ) :
-					rectangleArea(
-						Math.min( xMin, entX ),
-						Math.min( yMin, entY ),
-						Math.max( xMax, entX ),
-						Math.max( yMax, entY )
-					);
-				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
-					rectangleArea(
-						Math.min( xMin, entX ),
-						Math.min( yMin, entY ),
-						Math.max( xMax, entX + entWidth ),
-						Math.max( yMax, entY + entHeight )
-					) - rectangleArea( entX, entY, entX + entWidth, entY + entHeight );
-				default : throw 'Unexpected ' + ent;
-			};
-			if ( da < bestdA ) {
-				bestdA = da;
+			var x = evaluteCandidateEntry( ent, xMin, yMin, xMax, yMax );
+			if ( x < best ) {
+				best = x;
 				bestEntry = ent;
 			}
 		}
@@ -445,6 +453,14 @@ class RjTree<T> {
 			hasNext : function() { return !cache.isEmpty(); },
 			next : function() { bBoxIteratorStep( cache, stack, 2 ); return cache.pop(); }
 		};
+	}
+	
+	public function maxDepth() : Int {
+		var maxLevel = level;
+		for ( b in boudingBoxes() )
+			if ( b.level > maxLevel )
+				maxLevel = b.level;
+		return maxLevel + 1;
 	}
 	
 	#end
