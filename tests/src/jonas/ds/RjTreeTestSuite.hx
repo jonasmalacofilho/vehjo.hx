@@ -10,7 +10,6 @@ import jonas.unit.TestCase;
 import jonas.ds.RjTree;
 import jonas.Vector;
 using jonas.sort.Heapsort;
-import neko.Lib;
 
 /*
  * RjTree test suite
