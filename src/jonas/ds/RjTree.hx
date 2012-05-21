@@ -505,21 +505,19 @@ class RjTree<T> {
 	
 	public static inline var BUCKET_ENTRIES_CONTAINER = #if RJTREE_LISTS 'List' #else 'Array' #end;
 	
-	static inline function bBoxIterateNode<A>( node : RjTree<A>, cache : List<RjTreeBoundingBox>, stack : List<RjTree<A>> ) : Void {
-		cache.add( new RjTreeBoundingBox( node.xMin, node.yMin, node.xMax, node.yMax, node.area, node.level ) );
-		for ( ent in node.entries )
-			switch ( ent ) {
-				case Node( entChild ) :
-					stack.add( entChild );
-				case LeafPoint( entObject, entX, entY ) : // nothing to do here
-				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : // nothing to do here
-				default : throw 'Unexpected ' + ent;
-			}
-	}
-	
 	static inline function bBoxIteratorStep<A>( cache : List<RjTreeBoundingBox>, stack : List<RjTree<A>>, minCacheSize : Int ) : Void {
-		while ( minCacheSize > cache.length && !stack.isEmpty() )
-			bBoxIterateNode( stack.pop(), cache, stack );
+		while ( minCacheSize > cache.length && !stack.isEmpty() ) {
+			var node = stack.pop();
+			cache.add( new RjTreeBoundingBox( node.xMin, node.yMin, node.xMax, node.yMax, node.area, node.level ) );
+			for ( ent in node.entries )
+				switch ( ent ) {
+					case Node( entChild ) :
+						stack.add( entChild );
+					case LeafPoint( entObject, entX, entY ) : // nothing to do here
+					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : // nothing to do here
+					default : throw 'Unexpected ' + ent;
+				}
+		}
 	}
 		
 	public function boudingBoxes() : Iterator<RjTreeBoundingBox> {
