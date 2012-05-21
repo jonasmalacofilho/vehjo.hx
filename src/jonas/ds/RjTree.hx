@@ -546,16 +546,3 @@ class RjTreeBoundingBox {
 	}
 }
 #end
-
-/*
- * Possible changes:
- * 
- * 1) drop generic List:
- *    minimize memory overhead and optimize entry iterators
- *    vs. complicated code
- * 
- * 2) unbox Entry constructors:
- *    minimal global performance gain and a possibly large optimization in hxcpp
- *    vs. unsafe code (or unsafe casts)
- * 
- */
