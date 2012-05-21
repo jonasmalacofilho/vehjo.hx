@@ -191,23 +191,46 @@ class RjTree<T> {
 		return a1 - a0; // basic stuff
 	}
 	
-	inline function chooseEntryToInsert( xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : Entry<T> {
-		var bestEntry = Empty;
+	inline function chooseEntryToInsert( xMin : Float, yMin : Float, xMax : Float, yMax : Float ) : #if RJTREE_LISTS Entry<T> #else Int #end {
 		var best = Math.POSITIVE_INFINITY;
+		#if RJTREE_LISTS
+		var bestEntry = Empty;
 		for ( ent in entries ) {
 			var x = evaluteCandidateEntry( ent, xMin, yMin, xMax, yMax );
+		#else
+		var bestEntry = -1;
+		for ( i in 0...entries.length ) {
+			var x = evaluteCandidateEntry( entries[i], xMin, yMin, xMax, yMax );
+		#end
 			if ( x < best ) {
 				best = x;
+				#if RJTREE_LISTS
 				bestEntry = ent;
+				#else
+				bestEntry = i;
+				#end
 			}
 		}
 		return bestEntry;
 	}
 	
 	function insertOnOverflow( ent : Entry<T>, reinsert : Bool ) : Void {
+		#if !RJTREE_LISTS
+		var pi = -1;
+		#end
 		var p = switch ( ent ) {
-			case LeafPoint( entObject, entX, entY ) : chooseEntryToInsert( entX, entY, entX, entY ); 
-			case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : chooseEntryToInsert( entX, entY, entX + entWidth, entY + entHeight );
+			case LeafPoint( entObject, entX, entY ) :
+				#if RJTREE_LISTS
+				chooseEntryToInsert( entX, entY, entX, entY );
+				#else
+				entries[ pi = chooseEntryToInsert( entX, entY, entX, entY ) ];
+				#end
+			case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+				#if RJTREE_LISTS
+				chooseEntryToInsert( entX, entY, entX + entWidth, entY + entHeight );
+				#else
+				entries[ pi = chooseEntryToInsert( entX, entY, entX + entWidth, entY + entHeight ) ];
+				#end
 			default : throw 'Unexpected ' + ent;
 		};
 		switch ( p ) {
@@ -218,8 +241,12 @@ class RjTree<T> {
 			default :
 				// split
 				var newChild = child( this );
+				#if RJTREE_LISTS
 				entries.remove( p );
 				entries.push( Node( newChild ) );
+				#else
+				entries[pi] = Node( newChild );
+				#end
 				// insert the new leaf
 				newChild.entries.push( ent );
 				// insert the original leaf
