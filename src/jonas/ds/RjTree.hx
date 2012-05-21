@@ -250,11 +250,15 @@ class RjTree<T> {
 				// insert the new leaf
 				newChild.entries.push( ent );
 				// insert the original leaf
-				if ( reinsert )
+				if ( reinsert ) {
+					newChild.computeBoundingBox();
 					insertOnOverflow( p, false );
-				else
+				}
+				else {
 					newChild.entries.push( p );
-				newChild.computeBoundingBox();
+					newChild.computeBoundingBox();
+				}
+				
 		}
 	}
 	
