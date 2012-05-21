@@ -6,7 +6,6 @@ import neko.Lib;
 import cpp.Lib;
 #elseif js
 import js.Lib;
-import js.Dom.Event;
 #end
 
 /*
@@ -45,12 +44,12 @@ class Tests {
 		var t = new jonas.unit.TestRunner();
 		//t.customTrace = function( v, ?p ) { };
 		jonas.Base64TestSuite.add_tests( t );
-		jonas.HMACTestSuite.add_tests( t );
+		jonas.HMACTestSuite.add_tests( t ); // js: fails
 		jonas.MathExtensionTestSuite.add_tests( t );
 		jonas.NumberPrinterTestSuite.add_tests( t );
 		jonas.ds.DAryHeapTestSuite.add_tests( t );
-		jonas.ds.HashTableTestSuite.add_tests( t );
-		jonas.ds.MultiHashesTestSuite.add_tests( t );
+		jonas.ds.HashTableTestSuite.add_tests( t ); // js: fails
+		jonas.ds.MultiHashesTestSuite.add_tests( t ); // js: bugs in tests
 		jonas.ds.RjTreeTestSuite.add_tests( t );
 		jonas.ds.queue.PriorityQueueTestSuite.add_tests( t );
 		jonas.ds.queue.SimpleFIFOTestSuite.add_tests( t );
