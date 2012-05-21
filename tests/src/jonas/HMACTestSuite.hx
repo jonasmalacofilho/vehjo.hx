@@ -1,5 +1,6 @@
 package jonas;
 
+import haxe.BaseCode;
 import haxe.Md5;
 import jonas.HMAC;
 import jonas.io.BytesExtension;
@@ -87,8 +88,10 @@ class HMACTestCase extends jonas.unit.TestCase {
 	}
 	
 	public function testBaseCode() {
+		var encode16 = function( s : String ) { return haxe.BaseCode.encode( s, '0123456789abcdef' ); };
+		var decode16 = function( s : String ) { return haxe.BaseCode.decode( s, '0123456789abcdef' ); };
 		var a = 'c5738ffbaa1ff9d62e688841e89e608e';
-		assertEquals( a, Base16.encode16( Base16.decode16( a ) ) );
+		assertEquals( a, encode16( decode16( a ) ) );
 	}
 	
 }
