@@ -13,6 +13,8 @@ import jonas.Vector;
  * Compilation switches:
  * RJTREE_DEBUG:
 	 * enables access to node level and bounding box information
+ * RJTREE_LISTS
+     * use List (instead of Array) as bucket entries container
  * 
  * Copyright (c) 2012 Jonas Malaco Filho
  * Licensed under the MIT license. Check LICENSE.txt for more information.
@@ -78,7 +80,7 @@ class RjTree<T> {
 	}
 	
 	inline static function child<A>( parent : RjTree<A> ) : RjTree<A> {
-		var r = new RjTree( parent.bucketSize, parent.forcedReinsertion );
+		var r = new RjTree<A>( parent.bucketSize, parent.forcedReinsertion );
 		r.parent = parent;
 		#if RJTREE_DEBUG
 		r.level = parent.level + 1;
