@@ -1,5 +1,6 @@
 package jonas;
 
+import haxe.Md5;
 import jonas.HMAC;
 import jonas.io.BytesExtension;
 using jonas.Base16;
@@ -78,6 +79,18 @@ class HMACTestCase extends jonas.unit.TestCase {
 	public function test() {
 		assertEquals( digest, c.compute( data, truncate ) );
 	}
+	
+	public function testMd5() {
+		assertEquals( 'd41d8cd98f00b204e9800998ecf8427e', Md5.encode( '' ) );
+		assertEquals( 'e4d909c290d0fb1ca068ffaddf22cbd0', Md5.encode( 'The quick brown fox jumps over the lazy dog.' ) );
+		assertEquals( '9e107d9d372bb6826bd81d3542a419d6', Md5.encode( 'The quick brown fox jumps over the lazy dog' ) );
+	}
+	
+	public function testBaseCode() {
+		var a = 'c5738ffbaa1ff9d62e688841e89e608e';
+		assertEquals( a, Base16.encode16( Base16.decode16( a ) ) );
+	}
+	
 }
 
 class HMACTestSuite {

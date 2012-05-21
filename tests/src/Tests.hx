@@ -44,11 +44,11 @@ class Tests {
 		var t = new jonas.unit.TestRunner();
 		//t.customTrace = function( v, ?p ) { };
 		jonas.Base64TestSuite.add_tests( t );
-		jonas.HMACTestSuite.add_tests( t ); // js: fails
+		jonas.HMACTestSuite.add_tests( t ); // js: fails because testBaseCode fails
 		jonas.MathExtensionTestSuite.add_tests( t );
 		jonas.NumberPrinterTestSuite.add_tests( t );
 		jonas.ds.DAryHeapTestSuite.add_tests( t );
-		jonas.ds.HashTableTestSuite.add_tests( t ); // js: fails
+		jonas.ds.HashTableTestSuite.add_tests( t ); // js: does not run
 		jonas.ds.MultiHashesTestSuite.add_tests( t ); // js: bugs in tests
 		jonas.ds.RjTreeTestSuite.add_tests( t );
 		jonas.ds.queue.PriorityQueueTestSuite.add_tests( t );
