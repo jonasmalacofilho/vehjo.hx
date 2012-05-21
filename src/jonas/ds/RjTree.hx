@@ -1,5 +1,6 @@
 package jonas.ds;
 
+import jonas.RevIntIterator;
 import jonas.Vector;
 
 /**
@@ -26,7 +27,11 @@ class RjTree<T> {
 	// parent node (null if root)
 	var parent : RjTree<T>;
 	// bucket entries (up to bucketSize)
+	#if RJTREE_LISTS
 	var entries : List<Entry<T>>;
+	#else
+	var entries : Array<Entry<T>>;
+	#end
 	// max num of entries in a bucket
 	public var bucketSize( default, null ) : Int;
 	// forced 1-level reinsertion on overflow
@@ -56,7 +61,11 @@ class RjTree<T> {
 		this.bucketSize = bucketSize;
 		this.forcedReinsertion = forcedReinsertion;
 		
+		#if RJTREE_LISTS
 		entries = new List();
+		#else
+		entries = new Array();
+		#end
 		xMin = Math.POSITIVE_INFINITY;
 		yMin = Math.POSITIVE_INFINITY;
 		xMax = Math.NEGATIVE_INFINITY;
@@ -208,14 +217,14 @@ class RjTree<T> {
 				// split
 				var newChild = child( this );
 				entries.remove( p );
-				entries.add( Node( newChild ) );
+				entries.push( Node( newChild ) );
 				// insert the new leaf
-				newChild.entries.add( ent );
+				newChild.entries.push( ent );
 				// insert the original leaf
 				if ( reinsert )
 					insertOnOverflow( p, false );
 				else
-					newChild.entries.add( p );
+					newChild.entries.push( p );
 				newChild.computeBoundingBox();
 		}
 	}
@@ -223,7 +232,7 @@ class RjTree<T> {
 	function insertEntry( ent : Entry<T> ) : Void {
 		if ( entries.length < bucketSize ) {
 			// just push
-			entries.add( ent );
+			entries.push( ent );
 			switch ( ent ) {
 				case LeafPoint( entObject, entX, entY ) : expandBoundingBox( entX, entY, entX, entY ); 
 				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : expandBoundingBox( entX, entY, entX + entWidth, entY + entHeight );
@@ -253,19 +262,32 @@ class RjTree<T> {
 	public function removePoint( x : Float, y : Float, ?object : Null<T> ) : Int {
 		var removed = 0;
 		if ( entries.length > 0 && pointOverlaps( x, y ) )
-			for ( ent in entries )
+			#if RJTREE_LISTS
+			for ( ent in entries ) {
+			#else
+			for ( i in new RevIntIterator( entries.length, 0 ) ) {
+				var ent = entries[i];
+			#end
 				switch ( ent ) {
 					case Node( entChild ) : 
 						removed += entChild.removePoint( x, y, object );
 					case LeafPoint( entObject, entX, entY ) : 
 						if ( entX == x && entY == y && ( null == object || entObject == object ) ) {
+							#if RJTREE_LISTS
 							entries.remove( ent );
+							#else
+							if ( i < entries.length - 1 )
+								entries[i] = entries.pop();
+							else
+								entries.pop();
+							#end
 							removed++;
 							computeBoundingBox();
 						}
 					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : // nothing to do
 					default : throw 'Unexpected ' + ent;
 				}
+			}
 		length -= removed;
 		return removed;
 	}
@@ -277,19 +299,32 @@ class RjTree<T> {
 			throw 'Height must be >= 0';
 		var removed = 0;
 		if ( entries.length > 0 && rectangleOverlaps( x, y, x + width, y + height ) )
-			for ( ent in entries )
+			#if RJTREE_LISTS
+			for ( ent in entries ) {
+			#else
+			for ( i in new RevIntIterator( entries.length, 0 ) ) {
+				var ent = entries[i];
+			#end
 				switch ( ent ) {
 					case Node( entChild ) : 
 						removed += entChild.removeRectangle( x, y, width, height, object );
 					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : 
 						if ( entX == x && entY == y && entWidth == width && height == height && ( null == object || entObject == object ) ) {
+							#if RJTREE_LISTS
 							entries.remove( ent );
+							#else
+							if ( i < entries.length - 1 )
+								entries[i] = entries.pop();
+							else
+								entries.pop();
+							#end
 							removed++;
 							computeBoundingBox();
 						}
 					case LeafPoint( entObject, entX, entY ) : // nothing to do
 					default : throw 'Unexpected ' + ent;
 				}
+			}
 		length -= removed;
 		return removed;
 	}
@@ -297,24 +332,44 @@ class RjTree<T> {
 	public function removeObject( object : T ) : Int {
 		var removed = 0;
 		if ( entries.length > 0 )
-			for ( ent in entries )
+			#if RJTREE_LISTS
+			for ( ent in entries ) {
+			#else
+			for ( i in new RevIntIterator( entries.length, 0 ) ) {
+				var ent = entries[i];
+			#end
 				switch ( ent ) {
 					case Node( entChild ) : 
 						removed += entChild.removeObject( object );
 					case LeafPoint( entObject, entX, entY ) : 
 						if ( entObject == object ) {
+							#if RJTREE_LISTS
 							entries.remove( ent );
+							#else
+							if ( i < entries.length - 1 )
+								entries[i] = entries.pop();
+							else
+								entries.pop();
+							#end
 							removed++;
 							computeBoundingBox();
 						}
 					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : 
 						if ( entObject == object ) {
+							#if RJTREE_LISTS
 							entries.remove( ent );
+							#else
+							if ( i < entries.length - 1 )
+								entries[i] = entries.pop();
+							else
+								entries.pop();
+							#end
 							removed++;
 							computeBoundingBox();
 						}
 					default : throw 'Unexpected ' + ent;
 				}
+			}
 		length -= removed;
 		return removed;
 	}
@@ -418,6 +473,8 @@ class RjTree<T> {
 	
 	// ---- debug api
 	#if RJTREE_DEBUG
+	
+	public static inline var BUCKET_ENTRIES_CONTAINER = #if RJTREE_LISTS 'List' #else 'Array' #end;
 	
 	static inline function bBoxIterateNode<A>( node : RjTree<A>, cache : List<RjTreeBoundingBox>, stack : List<RjTree<A>> ) : Void {
 		cache.add( new RjTreeBoundingBox( node.xMin, node.yMin, node.xMax, node.yMax, node.area, node.level ) );
