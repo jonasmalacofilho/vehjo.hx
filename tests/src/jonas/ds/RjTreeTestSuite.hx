@@ -153,6 +153,20 @@ class RjTreeComprehensiveTest extends TestCase {
 		assertEquals( [0, 2].toString(), sortedArray( callback( tree.search, -5, -5, 10, 10 ) ).toString(), pos_infos( 'partial' ) );
 	}
 	
+	@description( 'test if width and height are being consistently passed around' )
+	public function testSearch3() {
+		tree.insertRectangle( -10, -5, 50, 35, 1 ); // ( -10, -5 ), ( 40, 30 )
+		assertEquals( [1].toString(), sortedArray( callback( tree.search, -10, -5, 50, 35 ) ).toString(), pos_infos( 'exact' ) );
+		assertEquals( [1].toString(), sortedArray( callback( tree.search, -10, -5, 0, 35 ) ).toString(), pos_infos( 'close on lower x' ) );
+		assertEquals( [1].toString(), sortedArray( callback( tree.search, -10, -5, 50, 0 ) ).toString(), pos_infos( 'close on lower y' ) );
+		assertEquals( [1].toString(), sortedArray( callback( tree.search, 40, -5, 0, 35 ) ).toString(), pos_infos( 'close on upper x' ) );
+		assertEquals( [1].toString(), sortedArray( callback( tree.search, -10, 30, 50, 0 ) ).toString(), pos_infos( 'close on upper y' ) );
+		assertEquals( [].toString(), sortedArray( callback( tree.search, -20, -5, 9.99, 45 ) ).toString(), pos_infos( 'under x' ) );
+		assertEquals( [].toString(), sortedArray( callback( tree.search, -10, -15, 50, 9.99 ) ).toString(), pos_infos( 'under y' ) );
+		assertEquals( [].toString(), sortedArray( callback( tree.search, 40.01, -5, 50, 45 ) ).toString(), pos_infos( 'over x' ) );
+		assertEquals( [].toString(), sortedArray( callback( tree.search, -10, 30.01, 50, 45 ) ).toString(), pos_infos( 'over y' ) );
+	}
+	
 	@description( 'basic removal test with up to 4 objects' )
 	public function testRemove1() {
 		assertEquals( 0, tree.removePoint( 0., 0. ), pos_infos( 'removed elements' ) );
