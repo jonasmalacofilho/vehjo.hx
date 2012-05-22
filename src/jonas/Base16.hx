@@ -17,8 +17,8 @@ class Base16 {
 		return new BaseCode( base ).encodeString( s );
 	}
 	
-	public static inline function encodeBytes16( b : Bytes ) : Bytes {
-		return new BaseCode( base ).encodeBytes( b );
+	public static inline function encodeBytes16( b : Bytes ) : String {
+		return new BaseCode( base ).encodeBytes( b ).toString();
 	}
 	
 	public static inline function toHex( s : String ) : String {
@@ -29,8 +29,8 @@ class Base16 {
 		return new BaseCode( base ).decodeString( s.toLowerCase() );
 	}
 	
-	public static inline function decodeBytes16( b : Bytes ) : Bytes {
-		return new BaseCode( base ).decodeBytes( b );
+	public static inline function decodeBytes16( s : String ) : Bytes {
+		return new BaseCode( base ).decodeBytes( Bytes.ofString( s.toLowerCase() ) );
 	}
 	
 	public static inline function fromHex( s : String ) : String {

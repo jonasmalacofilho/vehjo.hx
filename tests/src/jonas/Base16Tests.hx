@@ -21,6 +21,10 @@ class Base16Tests extends jonas.unit.TestCase {
 			encoded : '6a6f6e6173313233',
 			decoded : Bytes.ofString( 'jonas123' ),
 			problematic : false } );
+		set_configuration( 'not lower case', {
+			encoded : '6a6F6E6173313233',
+			decoded : Bytes.ofString( 'jonas123' ),
+			problematic : false } );
 		set_configuration( 'some UTF-8', {
 			encoded : 'c3a7',
 			decoded : Bytes.ofString( Utf8.validate( 'ç' ) ? 'ç' : Utf8.encode( 'ç' ) ),
@@ -50,25 +54,25 @@ class Base16Tests extends jonas.unit.TestCase {
 	}
 	
 	public function testEncode() {
-		assertEquals( encoded, Base16.encodeBytes16( decoded ).toString(), pos_infos( 'as bytes' ) );
+		assertEquals( encoded.toLowerCase(), Base16.encodeBytes16( decoded ).toLowerCase(), pos_infos( 'as bytes' ) );
 		#if js
 		if ( !problematic )
 		#end {
-			assertEquals( encoded, Base16.encode16( decoded.toString() ), pos_infos( 'as string' ) );
+			assertEquals( encoded.toLowerCase(), Base16.encode16( decoded.toString() ).toLowerCase(), pos_infos( 'as string' ) );
 		}
 	}
 	
 	public function testDecode() {
 		assertEquals(
-			bytesToArray( decoded ).toString(),
-			bytesToArray( Base16.decodeBytes16( Bytes.ofString( encoded ) ) ).toString(),
+			bytesToArray( decoded ).toString().toLowerCase(),
+			bytesToArray( Base16.decodeBytes16( encoded ) ).toString().toLowerCase(),
 			pos_infos( 'as bytes' ) );
 		#if js
 		if ( !problematic )
 		#end {
 			assertEquals(
-				decoded.toString(),
-				Base16.decode16( encoded ),
+				decoded.toString().toLowerCase(),
+				Base16.decode16( encoded ).toLowerCase(),
 				pos_infos( 'as string' ));
 		}
 	}
