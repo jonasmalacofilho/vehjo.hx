@@ -43,6 +43,7 @@ class Tests {
 	static function run_all_tests() {
 		var t = new jonas.unit.TestRunner();
 		//t.customTrace = function( v, ?p ) { };
+		jonas.Base16Tests.add_tests( t );
 		jonas.Base64TestSuite.add_tests( t );
 		jonas.HMACTestSuite.add_tests( t ); // js: fails; must use Bytes and not binary Strings
 		jonas.MathExtensionTestSuite.add_tests( t );
