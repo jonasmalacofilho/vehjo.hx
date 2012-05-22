@@ -7,24 +7,7 @@ using StringTools;
 /**
  * Base64 encoder/decoder
  * Copyright (c) 2012 Jonas Malaco Filho
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
  */
 
 class Base64 {
@@ -69,6 +52,10 @@ class Base64 {
 		return split_lines( b.encodeString( s ) );
 	}
 	
+	public function encode_bytes( bytes : Bytes ) : String {
+		return split_lines( b.encodeBytes( bytes ).toString() );
+	}
+	
 	function clean( s : String ) : String {
 		return rc.replace( s, '' );
 	}
@@ -77,14 +64,24 @@ class Base64 {
 		return b.decodeString( clean( s ) );
 	}
 	
+	public function decode_bytes( s : String ) : Bytes {
+		return b.decodeBytes( Bytes.ofString( clean( s ) ) );
+	}
+	
 	public static function encode64( s : String ) : String {
-		var b = new Base64();
-		return b.encode_string( s );
+		return new Base64().encode_string( s );
+	}
+	
+	public static function encodeBytes64( bytes : Bytes ) : String {
+		return new Base64().encode_bytes( bytes );
 	}
 	
 	public static function decode64( s : String ) : String {
-		var b = new Base64();
-		return b.decode_string( s );
+		return new Base64().decode_string( s );
+	}
+	
+	public static function decodeBytes64( s : String ) : Bytes {
+		return new Base64().decode_bytes( s );
 	}
 	
 }
