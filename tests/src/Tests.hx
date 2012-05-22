@@ -44,7 +44,7 @@ class Tests {
 		var t = new jonas.unit.TestRunner();
 		//t.customTrace = function( v, ?p ) { };
 		jonas.Base64TestSuite.add_tests( t );
-		jonas.HMACTestSuite.add_tests( t ); // js: fails because testBaseCode fails
+		jonas.HMACTestSuite.add_tests( t ); // js: fails; must use Bytes and not binary Strings
 		jonas.MathExtensionTestSuite.add_tests( t );
 		jonas.NumberPrinterTestSuite.add_tests( t );
 		jonas.ds.DAryHeapTestSuite.add_tests( t );
