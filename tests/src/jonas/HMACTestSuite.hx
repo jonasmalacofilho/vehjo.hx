@@ -9,24 +9,7 @@ using jonas.Base16;
 /*
  * HMAC test suite
  * Copyright (c) 2012 Jonas Malaco Filho
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
  */
 
 class HMACTestCase extends jonas.unit.TestCase {
@@ -34,7 +17,7 @@ class HMACTestCase extends jonas.unit.TestCase {
 	var data : String;
 	var digest : String;
 	var truncate : Int;
-	var c : HMAC;
+	var hash : String;
 	
 	public function new() {
 		super();
@@ -63,22 +46,15 @@ class HMACTestCase extends jonas.unit.TestCase {
 		set_configuration( 'Other - 05', { key : 'key', data : 'The quick brown fox jumps over the lazy dog', digest : 'de7c9b85b8b78aa6bc8a7a36f70a90701c9db4d9', hash : 'sha1', truncate : 0 } );
 		_config_default = 'RFC 2202 - 14';
 	}
-		
-	override function configure( name : String ) : Void {
-		var c = _configs.get( name );
-		key = c.key;
-		data = c.data;
-		digest = c.digest;
-		truncate = c.truncate;
-		switch ( c.hash.toLowerCase() ) {
-			case 'md5': this.c = new HMAC_Md5( key );
-			case 'sha1': this.c = new HMAC_SHA1( key );
-			default: throw 'Unkown hash function';
-		}
-	}
 	
 	public function test() {
-		assertEquals( digest, c.compute( data, truncate ) );
+		assertEquals( digest, switch ( hash.toLowerCase() ) {
+			case 'md5' :
+				HMAC.hmac_md5( key, data, truncate );
+			case 'sha1' :
+				HMAC.hmac_sha1( key, data, truncate );
+			default : throw Std.format( 'unkown hash function $hash' );
+		}, pos_infos( Std.format( 'unsafe string based hash function ($hash)' ) ) );
 	}
 	
 }
