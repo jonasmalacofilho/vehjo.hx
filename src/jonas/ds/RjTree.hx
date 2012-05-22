@@ -289,7 +289,7 @@ class RjTree<T> {
 			throw 'Width must be >= 0';
 		if ( height < 0 )
 			throw 'Height must be >= 0';
-		insertEntry( LeafRectangle( object, x, y, x + width, y + height ) );
+		insertEntry( LeafRectangle( object, x, y, width, height ) );
 	}
 	
 	public function removePoint( x : Float, y : Float, ?object : Null<T> ) : Int {
