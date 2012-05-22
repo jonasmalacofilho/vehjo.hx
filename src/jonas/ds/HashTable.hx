@@ -5,24 +5,7 @@ import jonas.MathExtension;
 /*
  * Open addressing hash table
  * Copyright (c) 2012 Jonas Malaco Filho
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Licensed under the MIT license. Check LICENSE.txt for more information.
  */
 
 /**
@@ -74,16 +57,22 @@ class StringHashTable<D> {
 	// odd integer in the range 2^(w-1) < A < 2^w; should not be too close to 2^(w-1) or 2^w
 	var A : Int;
 	
-	// hash function (horner + multiplicative + simplification)
+	// hash function
+	// horner + multiplicative + simplification OR fallback function for some targets
 	inline function hash( k : String ) : Int {
 		var h = H0;
 		for ( i in 0...k.length )
+			#if !js
 			h = h * A + k.charCodeAt( i );
+			#else
+			h = Std.int( h * A ) + k.charCodeAt( i );
+			#end
 		return h;
 	}
 	
 	// hash function configuration (randomized)
 	function set_hash_function() : Void {
+		#if !js
 		// 2^(w-1) < A < 2^w, odd A, not too close to 2^(w-1) or 2^w
 		A = 1;
 		for ( i in 0...( w - 1 ) )
@@ -91,6 +80,11 @@ class StringHashTable<D> {
 		A |= 1;
 		// 0 < H0 < A, odd H0
 		H0 = Std.random( A & MathExtension.INT_MAX ) | 1;
+		#else
+		A = 31;
+		H0 = Std.random( A ) | 1;
+		#end
+		//trace( [ H0, A ] );
 	}
 	
 	// x mod m
@@ -304,9 +298,11 @@ class StringHashTable<D> {
 	public function expected_probes_misses() : Float { return .5 * ( 1. + 1. / Math.pow( 1. - load_factor(), 2. ) ); }
 	
 	// on hits probe stats
-	public function probes_hits() : { avg : Float, max : Int } {
+	public function probes_hits() : { avg : Float, max : Int, worst_key : String, worst_hash : Int } {
 		var total_probes = 0.;
-		var max_probes = 0;
+		var max_probes = -1;
+		var worst_key = '';
+		var worst_hash = 0;
 		for ( i in 0...m ) {
 			var x = t[i];
 			if ( null != x ) {
@@ -321,11 +317,14 @@ class StringHashTable<D> {
 						p++;
 					}
 				total_probes += p + 1;
-				if ( p > max_probes )
+				if ( p > max_probes ) {
 					max_probes = p;
+					worst_key = x.k;
+					worst_hash = x.h;
+				}
 			}
 		}
-		return { avg : total_probes / length, max : max_probes };
+		return { avg : total_probes / length, max : max_probes, worst_key : worst_key, worst_hash : worst_hash };
 	}
 	
 	// on misses probe stats
@@ -357,6 +356,8 @@ class StringHashTable<D> {
 			ExpProbesHits : expected_probes_hits(),
 			AvgProbesHits : hits.avg,
 			MaxProbesHits : hits.max,
+			WorstKey : hits.worst_key,
+			WorstHash : hits.worst_hash,
 			ExpProbesMisses : expected_probes_misses(),
 			AvgProbesMisses : misses.avg,
 			MaxProbesMisses : misses.max
@@ -625,9 +626,10 @@ class IntHashTable<D> {
 	public function expected_probes_misses() : Float { return .5 * ( 1. + 1. / Math.pow( 1. - load_factor(), 2. ) ); }
 	
 	// on hits probe stats
-	public function probes_hits() : { avg : Float, max : Int } {
+	public function probes_hits() : { avg : Float, max : Int, worst_key : Int, worst_hash : Int } {
 		var total_probes = 0.;
-		var max_probes = 0;
+		var max_probes = -1;
+		var worst_key = 0;
 		for ( i in 0...m ) {
 			var x = t[i];
 			if ( null != x ) {
@@ -642,11 +644,13 @@ class IntHashTable<D> {
 						p++;
 					}
 				total_probes += p + 1;
-				if ( p > max_probes )
+				if ( p > max_probes ) {
 					max_probes = p;
+					worst_key = x.k;
+				}
 			}
 		}
-		return { avg : total_probes / length, max : max_probes };
+		return { avg : total_probes / length, max : max_probes, worst_key : worst_key, worst_hash : hash( worst_key ) };
 	}
 	
 	// on misses probe stats
@@ -678,6 +682,8 @@ class IntHashTable<D> {
 			ExpProbesHits : expected_probes_hits(),
 			AvgProbesHits : hits.avg,
 			MaxProbesHits : hits.max,
+			WorstKey : hits.worst_key,
+			WorstHash : hits.worst_hash,
 			ExpProbesMisses : expected_probes_misses(),
 			AvgProbesMisses : misses.avg,
 			MaxProbesMisses : misses.max
