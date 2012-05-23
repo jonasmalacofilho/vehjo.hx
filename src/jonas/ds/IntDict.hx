@@ -319,7 +319,7 @@ class IntDict<T> {
 		else if ( size > 8 )
 			if ( length <= SHRINKAGE_SMALL && alpha < MIN_LOAD_FACTOR_SMALL ) {
 				trace( [ length, size, Std.int( alpha * 100 ) ] );
-				doResize( size >> GROWTH_SHIFT );
+				doResize( size >> GROWTH_SHIFT ); // when shrinking, always use the default GROWTH_SHIFT
 			}
 			else if ( length > SHRINKAGE_SMALL && alpha < MIN_LOAD_FACTOR ) {
 				trace( [ length, size, Std.int( alpha * 100 ) ] );
