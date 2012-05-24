@@ -26,18 +26,18 @@ class Tests {
 	static function run_all_tests() {
 		var t = new jonas.unit.TestRunner();
 		//t.customTrace = function( v, ?p ) { };
-		jonas.Base16Tests.add_tests( t );
-		jonas.Base64TestSuite.add_tests( t );
-		jonas.HMACTestSuite.add_tests( t ); // js: not suported for there is no Bytes implementation for Md5 or SHA-1 in the std
-		jonas.MathExtensionTestSuite.add_tests( t );
-		jonas.NumberPrinterTestSuite.add_tests( t );
-		jonas.ds.DAryHeapTestSuite.add_tests( t );
-		jonas.ds.HashTableTestSuite.add_tests( t ); // js: slow
-		jonas.ds.MultiHashesTestSuite.add_tests( t ); // js: bugs in tests
+		//jonas.Base16Tests.add_tests( t );
+		//jonas.Base64TestSuite.add_tests( t );
+		//jonas.HMACTestSuite.add_tests( t ); // js: not suported for there is no Bytes implementation for Md5 or SHA-1 in the std
+		//jonas.MathExtensionTestSuite.add_tests( t );
+		//jonas.NumberPrinterTestSuite.add_tests( t );
+		//jonas.ds.DAryHeapTestSuite.add_tests( t );
+		//jonas.ds.HashTableTestSuite.add_tests( t ); // js: slow
+		//jonas.ds.MultiHashesTestSuite.add_tests( t ); // js: bugs in tests
 		jonas.ds.RjTreeTestSuite.add_tests( t );
-		jonas.ds.queue.PriorityQueueTestSuite.add_tests( t );
-		jonas.ds.queue.SimpleFIFOTestSuite.add_tests( t );
-		jonas.graph.GraphTestSuite.add_tests( t );
+		//jonas.ds.queue.PriorityQueueTestSuite.add_tests( t );
+		//jonas.ds.queue.SimpleFIFOTestSuite.add_tests( t );
+		//jonas.graph.GraphTestSuite.add_tests( t );
 		t.run();
 	}
 	
