@@ -1,5 +1,6 @@
 package jonas.ds;
 
+import haxe.Timer;
 import jonas.RevIntIterator;
 
 // imports for testing
@@ -29,9 +30,15 @@ class IntDict<T> {
  * or calls to new) but has bad cache locality.
  * 
  * An entry [i] in the table may be in one of the following states:
- *   - filled, state[i] = FILLED; //
- *   - free, state[i] = FREE;
- *   - dummy, state[i] = DUMMY;
+ *   - FILLED: the entry exists
+ *   - FREE: the entry does not exist and no further probing is necessary
+ *   - DUMMY: there was something here, should keep probing
+ * 
+ * The cache can be in one of the following states:
+ *   - FILLED: the key exists; safe for set/remove
+ *   - FREE: the key does not exists, AND the cache index points to the first lookup index;
+ *           safe for set/remove
+ *   - DUMMY: the key does not exists, but nothing else is sure; UNSAFE for set/remove
  * 
  * There also is another state (BAD) used by probeCount(debug only) and cache.
  * Both cache and probeCoun should be ignored if on state==BAD.
@@ -152,38 +159,110 @@ class IntDict<T> {
 		#if debug
 		b.add( ' : loadFactor=' );
 		b.add( loadFactor() );
+		b.add( ', length=' );
+		b.add( length );
+		b.add( ', size=' );
+		b.add( size );
+		b.add( ', cachedState=' );
+		b.add( switch ( cachedState ) {
+			case FILLED : 'filled';
+			case FREE : 'free';
+			case DUMMY : 'dummy';
+			case BAD : 'bad';
+		} );
+		b.add( ', cachedIndex=' );
+		b.add( j );
+		b.add( ', cachedKey=' );
+		b.add( cachedKey );
+		b.add( ', lastProbeCount=' );
+		b.add( probeCount );
 		#end
 		return b.toString();
 	}
 	
+	// check if key exists in the dictionary
 	public function exists( key : Int ) : Bool {
+		
+		// attempt to fetch the answer from the cache
+		// if the cache is not BAD and the cache key matches the input,
+		// than the cache state will be one of the folling, depending if the key:
+		//   - exists: FILLED
+		//   - does not exist and is safe to use the cached index: FREE
+		//   - just does not exists: DUMMY (unsafe)
+		// therefore, the key exists in the dictionary if cachedState==FILLED
 		if ( cachedState != BAD && cachedKey == key ) {
 			#if debug
 			probeCount = -1;
 			#end
 			return cachedState == FILLED;
 		}
-		cachedKey = key;
-		j = mod( key );
-		perturbInit( key );
+		
 		#if debug
 		probeCount = 0;
 		#end
-		var sj = s[j];
+		
+		// start to lookup the table
+		// start on index = hash mod size
+		j = mod( key ); // Int hashes to itself
+		// if that slot contains a valid key-value pair, test the key
+		// if the key matches the input, update the cache and return true (found)
+		if ( s[j] == FILLED && k[j] == key ) {
+			cachedKey = key;
+			cachedState = FILLED;
+			return true;
+		}
+		
+		// if the slot is marked as free, can stop, update the cache and return false (not found)
+		if ( s[j] == FREE ) {
+			cachedKey = key;
+			cachedState = FREE;
+			return false;
+		}
+		
+		// did not find the key in the initial index
+		// will execute the probing sequence
+		// but first, prepare the perturbation
+		perturbInit( key );
+		
+		// begin probing
+		// get the first new index
+		probe();
+		var sj = s[j]; // s[j] cache
+		// go over the probing sequence returned indices
+		// if a slot is free, return false
+		// else
+		//     if the key-value pair exists, check the key and if, it matches, return true
+		//     (updating the cache)
+		//     else, get the next index
 		while ( sj != FREE ) {
-			//trace( [ perturb, j, probeCount ] );
 			if ( sj == FILLED && k[j] == key ) {
+				cachedKey = key;
 				cachedState = FILLED;
 				return true;
 			}
 			probe();
 			sj = s[j];
 		}
-		cachedState = FREE;
+		
+		// did not find anything
+		cachedKey = key;
+		cachedState = DUMMY;
 		return false;
 	}
 	
+	// get value for key
+	// if the key does not exists, returns cast null
+	// should always use exists( k ) before get( k ) if there is no garantee that
+	// the k exists in the dictionary; using so will NOT result in two lookups
 	public function get( key : Int ) : T {
+		
+		// attempt to fetch the answer from the cache
+		// if the cache is not BAD and the cache key matches the input,
+		// than the cache state will be one of the folling, depending if the key:
+		//   - exists: FILLED
+		//   - does not exist and is safe to use the cached index: FREE
+		//   - just does not exists: DUMMY (unsafe)
+		// therefore, the key exists in the dictionary if cachedState==FILLED
 		if ( cachedState != BAD && cachedKey == key ) {
 			#if debug
 			probeCount = -1;
@@ -197,22 +276,61 @@ class IntDict<T> {
 				return cast null;
 				#end
 		}
-		cachedKey = key;
-		j = mod( key );
-		perturbInit( key );
+		
 		#if debug
 		probeCount = 0;
 		#end
-		var sj = s[j];
+		
+		// start to lookup the table
+		// start on index = hash mod size
+		j = mod( key ); // Int hashes to itself
+		// if that slot contains a valid key-value pair, test the key
+		// if the key matches the input, update the cache and return the value (found)
+		if ( s[j] == FILLED && k[j] == key ) {
+			cachedKey = key;
+			cachedState = FILLED;
+			return v[j];
+		}
+		
+		// if the slot is marked as free, can stop, update the cache and return null (not found)
+		if ( s[j] == FREE ) {
+			cachedKey = key;
+			cachedState = FREE;
+			#if neko
+			return null;
+			#else
+			return cast null;
+			#end
+		}
+		
+		// did not find the key in the initial index
+		// will execute the probing sequence
+		// but first, prepare the perturbation
+		perturbInit( key );
+		
+		// begin probing
+		// get the first new index
+		probe();
+		var sj = s[j]; // s[j] cache
+		// go over the probing sequence returned indices
+		// if a slot is free, return false
+		// else
+		//     if the key-value pair exists, check the key and if, it matches, return true
+		//     (updating the cache)
+		//     else, get the next index
 		while ( sj != FREE ) {
 			if ( sj == FILLED && k[j] == key ) {
+				cachedKey = key;
 				cachedState = FILLED;
 				return v[j];
 			}
 			probe();
 			sj = s[j];
 		}
-		cachedState = FREE;
+		
+		// did not find anything
+		cachedKey = key;
+		cachedState = DUMMY;
 		#if neko
 		return null;
 		#else
@@ -220,41 +338,135 @@ class IntDict<T> {
 		#end
 	}
 	
+	// set value corresponding to key
+	// if the key already exists, it's value is replaced
+	// returns the same value
 	public function set( key : Int, value : T ) : T {
-		if ( cachedState != BAD && cachedKey == key ) {
-			if ( cachedState != FILLED )
-				length++;
-			k[j] = key;
-			v[j] = value;
-			s[j] = FILLED;
-			cachedState = FILLED;
+		
+		// check if the cache has usefull information
+		// if the cache is not BAD and the cache key matches the input,
+		// than the cache state will be one of the folling, depending if the key:
+		//   - exists: FILLED
+		//   - does not exist and is safe to use the cached index: FREE
+		//   - just does not exists: DUMMY (unsafe)
+		if ( ( cachedState == FILLED || cachedState == FREE ) && cachedKey == key ) {
 			#if debug
 			probeCount = -1;
 			#end
-			resizeIfNeeded();
+			// if the key is not being replaced, increment length
+			if ( cachedState != FILLED )
+				length++;
+			s[j] = FILLED;
+			k[j] = key;
+			v[j] = value;
+			cachedState = FILLED;
 			return value;
 		}
-		j = mod( key );
-		perturbInit( key );
+		
 		#if debug
 		probeCount = 0;
 		#end
+		
+		// not on cache, start doing table lookups
+		// first index
+		j = mod( key );
+		// initial perturbation
+		perturbInit( key );
+		// probe until a FREE, DUMMY or equal key is found
 		while ( s[j] == FILLED && k[j] != key )
 			probe();
+		// if the key is not being replaced, increment length
 		if ( s[j] != FILLED )
 			length++;
+		s[j] = FILLED;
 		k[j] = key;
 		v[j] = value;
-		s[j] = FILLED;
 		cachedKey = key;
 		cachedState = FILLED;
 		resizeIfNeeded();
 		return value;
 	}
 	
+	// remove key from the dictionary
+	// it consists in setting the slot to DUMMY
+	// will not shrink the table (that is only possible on set)
 	public function remove( key : Int ) : Bool {
-		throw 'not implemented';
-		return null;
+		
+		// attempt to use the cache
+		// if the cache is not BAD and the cache key matches the input,
+		// than the cache state will be one of the folling, depending if the key:
+		//   - exists: FILLED
+		//   - does not exist and is safe to use the cached index: FREE
+		//   - just does not exists: DUMMY (unsafe)
+		// therefore, the key exists in the dictionary if cachedState==FILLED
+		if ( cachedState != BAD && cachedKey == key ) {
+			#if debug
+			probeCount = -1;
+			#end
+			if ( cachedState == FILLED ) {
+				s[j] = DUMMY;
+				cachedState = DUMMY;
+				length--;
+				return true;
+			}
+			else
+				return false;
+		}
+		
+		#if debug
+		probeCount = 0;
+		#end
+		
+		// start to lookup the table
+		// start on index = hash mod size
+		j = mod( key ); // Int hashes to itself
+		// if that slot contains a valid key-value pair, test the key
+		// if the key matches the input, remove it
+		if ( s[j] == FILLED && k[j] == key ) {
+			s[j] = DUMMY;
+			cachedKey = key;
+			cachedState = DUMMY;
+			length--;
+			return true;
+		}
+		
+		// if the slot is marked as free, can stop, update the cache and return false (not removed)
+		if ( s[j] == FREE ) {
+			cachedKey = key;
+			cachedState = FREE;
+			return false;
+		}
+		
+		// did not find the key in the initial index
+		// will execute the probing sequence
+		// but first, prepare the perturbation
+		perturbInit( key );
+		
+		// begin probing
+		// get the first new index
+		probe();
+		var sj = s[j]; // s[j] cache
+		// go over the probing sequence returned indices
+		// if a slot is free, return false
+		// else
+		//     if the key-value pair exists, check the key and if, it matches, remove it
+		//     else, get the next index
+		while ( sj != FREE ) {
+			if ( sj == FILLED && k[j] == key ) {
+				s[j] = DUMMY;
+				cachedKey = key;
+				cachedState = DUMMY;
+				length--;
+				return true;
+			}
+			probe();
+			sj = s[j];
+		}
+		
+		// did not find anything
+		cachedKey = key;
+		cachedState = DUMMY;
+		return false;
 	}
 	
 // ---- Helper API
@@ -313,16 +525,16 @@ class IntDict<T> {
 		var alpha = loadFactor();
 		//trace( [ length, size, Std.int( alpha * 100 ) ] );
 		if ( alpha > MAX_LOAD_FACTOR ) {
-			trace( [ length, size, Std.int( alpha * 100 ) ] );
+			//trace( [ length, size, Std.int( alpha * 100 ) ] );
 			doResize( size << ( length <= GROWTH_SMALL ? GROWTH_SHIFT_SMALL : GROWTH_SHIFT ) );
 		}
 		else if ( size > 8 )
 			if ( length <= SHRINKAGE_SMALL && alpha < MIN_LOAD_FACTOR_SMALL ) {
-				trace( [ length, size, Std.int( alpha * 100 ) ] );
+				//trace( [ length, size, Std.int( alpha * 100 ) ] );
 				doResize( size >> GROWTH_SHIFT ); // when shrinking, always use the default GROWTH_SHIFT
 			}
 			else if ( length > SHRINKAGE_SMALL && alpha < MIN_LOAD_FACTOR ) {
-				trace( [ length, size, Std.int( alpha * 100 ) ] );
+				//trace( [ length, size, Std.int( alpha * 100 ) ] );
 				doResize( size >> GROWTH_SHIFT );
 			}
 	}
@@ -377,6 +589,7 @@ class IntDictTests extends TestCase {
 	
 	@description( 'forced collisions' )
 	public function testForcedCollisions1() {
+		var startTime = Timer.stamp();
 		var t = new IntDict();
 		//trace( t );
 		assertFalse( t.exists( 7 ) );
@@ -401,6 +614,36 @@ class IntDictTests extends TestCase {
 			//trace( t );
 		}
 		//trace( t );
+		//trace( 'Current implementation took: ' + ( Timer.stamp() - startTime ) );
+	}
+	
+	@description( 'current implementation benchmark' )
+	public function testBenchmark1() {
+		var startTime = Timer.stamp();
+		var t = new IntDict();
+		t.set( 7, 10 );
+		while ( t.length < 64 * 1024 ) {
+			var len = t.length;
+			var k = ( -1212 + 2723 * len ) | 7;
+			t.set( k, len );
+		}
+		trace( 'Current implementation took: ' + ( Timer.stamp() - startTime ) );
+	}
+	
+	@description( 'reference benchmark' )
+	public function testRefBenchmark1() {
+		var startTime = Timer.stamp();
+		var t = new IntHash();
+		var length = 0;
+		t.set( 7, 10 );
+		length++;
+		while ( length < 64 * 1024 ) {
+			var len = length;
+			var k = ( -1212 + 2723 * len ) | 7;
+			t.set( k, len );
+			length++;
+		}
+		trace( 'Std version took: ' + ( Timer.stamp() - startTime ) );
 	}
 	
 	@description( 'unset keys because of cache' )
@@ -420,6 +663,83 @@ class IntDictTests extends TestCase {
 		assertTrue( t.exists( 15 ) );
 		assertEquals( 100, t.get( 15 ) );
 		trace( t );
+	}
+	
+	@description( 'set two different values to the same key, with and without cache' )
+	public function testOverwrite1() {
+		var t = new IntDict();
+		t.set( 0, 1 );
+		assertEquals( 1, t.get( 0 ) );
+		t.set( 1, 2 );
+		assertEquals( 1, t.get( 0 ) );
+		assertEquals( 2, t.get( 1 ) );
+		t.set( 0, -1 );
+		assertEquals( -1, t.get( 0 ) );
+		assertEquals( 2, t.get( 1 ) );
+		trace( t );
+	}
+	
+	@description( 'insert and then remove some keys (with collisions)' )
+	public function testRemove1() {
+		var t = new IntDict();
+		var k = 7;
+		while ( t.length < .6 * 8 ) {
+			t.set( k, t.length );
+			//trace( t );
+			assertEquals( t.length - 1, t.get( k ) );
+			k = ( k * 123 * t.length ) | 7;
+		}
+		trace( t );
+		var len = t.length;
+		k = 7;
+		for ( i in 0...t.length ) {
+			t.remove( k );
+			assertEquals( --len, t.length, pos_infos( 'length after removal' ) );
+			var k2 = 7;
+			for ( j in 0...t.length ) {
+				if ( j > i ) {
+					//trace( k2 );
+					//trace( t );
+					assertTrue( t.exists( k2 ), pos_infos( 'untouched key still exists' ) );
+					//trace( t );
+					assertEquals( j, t.get( k2 ), pos_infos( 'untouched key still maps to correct value' ) );
+					assertFalse( t.exists( k ), pos_infos( 'deleted key does no exist/cleans cache' ) );
+					assertEquals( j, t.get( k2 ), pos_infos( 'untouched key still maps to correct value/with clean cache' ) );
+				}
+				k2 = ( k2 * 123 * ( j + 1 ) ) | 7;
+			}
+			k = ( k * 123 * ( i + 1 ) ) | 7;
+		}
+		trace( t );
+	}
+	
+	@description( 'set/remove/set/reset/remove' )
+	public function testRemove2() {
+		var t = new IntDict();
+		t.set( 0, 10 );
+		assertEquals( 1, t.length );
+		assertEquals( 10, t.get( 0 ) );
+		t.remove( 0 );
+		assertEquals( 0, t.length );
+		assertFalse( t.exists( 0 ) );
+		t.set( 10, 100 );
+		assertEquals( 1, t.length );
+		assertEquals( 100, t.get( 10 ) );
+		t.set( 0, 10 );
+		assertEquals( 2, t.length );
+		assertEquals( 10, t.get( 0 ) );
+		t.remove( 10 );
+		assertEquals( 1, t.length );
+		assertFalse( t.exists( 10 ) );
+		t.remove( 0 );
+		assertEquals( 0, t.length );
+		assertFalse( t.exists( 0 ) );
+		t.set( 0, 10 );
+		assertEquals( 1, t.length );
+		assertEquals( 10, t.get( 0 ) );
+		t.remove( 0 );
+		assertEquals( 0, t.length );
+		assertFalse( t.exists( 0 ) );
 	}
 	
 }
