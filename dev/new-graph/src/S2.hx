@@ -1,5 +1,8 @@
 package ;
 
+// thanks, Cauê Waneck!
+// some modifications on top of S1
+
 // please understand digraph as "a directed graph", or a non-symmetrical graph
 
 // for convenience, this does not deal with multi(di)graphs (multiple arcs for
@@ -10,30 +13,30 @@ package ;
 // I also need to be able to instanciate base classes
 
 // the base Vertex class
-class Vertex {
+class Vertex<V,A> {
 	// head of the adjacency list of arcs the leave this vertex
-	public var adjHead : Arc;
+	public var adjHead : A;
 }
 
 // the base Arc class
 // arcs are stored as linked list nodes
 // they do not know their origin node, only their destination one
-class Arc {
+class Arc<V, A> {
 	// destination vertex of this arc
-	public var w : Vertex;
+	public var w : V;
 	// next arc on the adjacency list (of the origin vertex)
-	public var adjNext : Arc;
+	public var adjNext : A;
 }
 
 // the base Digraph class
-class Digraph<V:Vertex,A:Arc> {
+class Digraph<V:Vertex<V,A>,A:Arc<V,A>> {
 	// all vertices of the digraph
 	var vs : Array<V>;
 }
 
 // the extended Vertex class
 // adds a cost:Float property to Vertex
-class ExtVertex extends Vertex {
+class ExtVertex extends Vertex<ExtVertex,ExtArc> {
 	public var cost : Float;
 	public function new( cost ) {
 		adjHead = null;
@@ -43,7 +46,7 @@ class ExtVertex extends Vertex {
 
 // the extended Arc class
 // adds a cost:Float property to Arc
-class ExtArc extends Arc {
+class ExtArc extends Arc<ExtVertex,ExtArc> {
 	public var cost : Float;
 	public function new( w, cost ) {
 		this.w = w;
@@ -54,7 +57,7 @@ class ExtArc extends Arc {
 // the extended Digraph class
 // do something that requires ExtVertex and ExtArc (use the cost properties
 // of both)
-class ExtDigraph<V:ExtVertex,A:ExtArc> extends Digraph<V,A > {
+class ExtDigraph extends Digraph<ExtVertex,ExtArc> {
 	
 	public function new() {
 		vs = [];
@@ -78,7 +81,7 @@ class ExtDigraph<V:ExtVertex,A:ExtArc> extends Digraph<V,A > {
 }
 
 // some more tests, replicating the use of such ExtDigraph somewhere else
-class E0 {
+class S2 {
 	static function main() {
 		// just try to construct all relevant elements
 		// a node

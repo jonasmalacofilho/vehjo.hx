@@ -1,5 +1,7 @@
 package ;
 
+// what jonas.graph does now
+
 // please understand digraph as "a directed graph", or a non-symmetrical graph
 
 // for convenience, this does not deal with multi(di)graphs (multiple arcs for
@@ -65,20 +67,21 @@ class ExtDigraph<V:ExtVertex,A:ExtArc> extends Digraph<V,A > {
 			// outer loop; require ExtVertex (and NOT Vertex)
 			trace( v.cost );
 			// currently, jonas.graph uses an unsafe cast here: var p : A = cast v.adjHead;
-			var p = v.adjHead;
+			var p : A = cast v.adjHead;
 			while ( p != null ) {
 				// inner loop, require ExtArc (and NOT Arc)
-				trace( p.w.cost );
+				var w : V = cast p.w;
+				trace( w.cost );
 				trace( p.cost );
 				// currently, jonas.graph uses an unsafe cast here: var p = cast p.adjNext;
-				p = p.adjNext;
+				p = cast p.adjNext;
 			}
 		}
 	}
 }
 
 // some more tests, replicating the use of such ExtDigraph somewhere else
-class E0 {
+class S0 {
 	static function main() {
 		// just try to construct all relevant elements
 		// a node
@@ -95,5 +98,6 @@ class E0 {
 		w.adjHead = a2;
 		// a extended digraph
 		var x = new ExtDigraph();
+		trace( untyped [ v, w, a1, a2, x ] );
 	}
 }

@@ -1,7 +1,5 @@
 package ;
 
-import E0;
-
 import jonas.graph.GraphTestSuite;
 import jonas.unit.TestRunner;
 
