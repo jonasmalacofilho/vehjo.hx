@@ -1,8 +1,5 @@
 package ;
 
-// X,Y are type parameters used to remove the need for unsafe casts in
-// the internal while loop in ExtDigraph.test()
-
 // please understand digraph as "a directed graph", or a non-symmetrical graph
 
 // for convenience, this does not deal with multi(di)graphs (multiple arcs for
@@ -13,30 +10,30 @@ package ;
 // I also need to be able to instanciate base classes
 
 // the base Vertex class
-class Vertex<X,Y> {
+class Vertex {
 	// head of the adjacency list of arcs the leave this vertex
-	public var adjHead : Y;
+	public var adjHead : Arc;
 }
 
 // the base Arc class
 // arcs are stored as linked list nodes
 // they do not know their origin node, only their destination one
-class Arc<X,Y> {
+class Arc {
 	// destination vertex of this arc
-	public var w : X;
+	public var w : Vertex;
 	// next arc on the adjacency list (of the origin vertex)
-	public var adjNext : Y;
+	public var adjNext : Arc;
 }
 
 // the base Digraph class
-class Digraph<V:Vertex<V,A>,A:Arc<V,A>> {
+class Digraph<V:Vertex,A:Arc> {
 	// all vertices of the digraph
 	var vs : Array<V>;
 }
 
 // the extended Vertex class
 // adds a cost:Float property to Vertex
-class ExtVertex<X,Y> extends Vertex<X,Y> {
+class ExtVertex extends Vertex {
 	public var cost : Float;
 	public function new( cost ) {
 		adjHead = null;
@@ -46,7 +43,7 @@ class ExtVertex<X,Y> extends Vertex<X,Y> {
 
 // the extended Arc class
 // adds a cost:Float property to Arc
-class ExtArc<X,Y> extends Arc<X,Y> {
+class ExtArc extends Arc {
 	public var cost : Float;
 	public function new( w, cost ) {
 		this.w = w;
@@ -57,26 +54,10 @@ class ExtArc<X,Y> extends Arc<X,Y> {
 // the extended Digraph class
 // do something that requires ExtVertex and ExtArc (use the cost properties
 // of both)
-class ExtDigraph<V:ExtVertex<V,A>,A:ExtArc<V,A>> extends Digraph<V,A > {
+class ExtDigraph<V:ExtVertex,A:ExtArc> extends Digraph<V,A > {
 	
 	public function new() {
-		// just try to construct all relevant elements
-		// a node
-		var v = new ExtVertex( Math.random() );
-		// register it on the digraph
-		vs.push( v );
-		// another node
-		var w = new ExtVertex( Math.random() );
-		// register it on the digraph
-		vs.push( w );
-		// an arc
-		var a1 = new ExtArc( w, Math.random() );
-		// register it on its origin vertex
-		v.adjHead = a1;
-		// another arc
-		var a2 = new ExtArc( v, Math.random() );
-		// register it on its origin vertex
-		w.adjHead = a2;
+		vs = [];
 	}
 	
 	public function test() {
