@@ -20,6 +20,9 @@ class SharedConnection implements Connection {
 		this.cnx = cnx;
 		mutex = new Mutex();
 	}
+
+	public inline function acquire() { mutex.acquire(); }
+	public inline function release() { mutex.release(); }
 	
 	// This always returns null, since the mutexes are automatically released
 	public inline function request( s ) : ResultSet {
