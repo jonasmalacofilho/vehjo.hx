@@ -61,6 +61,7 @@ class SharedResultSet implements ResultSet {
 
 	public inline function new( resultSet, mutex ) {
 		this.resultSet = resultSet;
+		this.mutex = mutex;
 	}
 
 	public inline function release() : Void {
