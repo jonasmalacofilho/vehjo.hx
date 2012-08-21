@@ -135,7 +135,7 @@ class IntMultiHash<T>
 		}
 	}
 	
-	inline public function pop(key : Int) : T
+	inline public function pop(key : Int) : Null<T>
 	{
 		if (exists(key))
 			return _hash.get(key).pop();

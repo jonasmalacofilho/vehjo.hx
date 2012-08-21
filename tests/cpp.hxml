@@ -1,0 +1,6 @@
+-cmd mkdir -p bin/cpp
+--next
+-cp src
+-lib jonas-haxe
+-main Tests
+-cpp bin/cpp/

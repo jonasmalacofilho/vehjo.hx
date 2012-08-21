@@ -92,7 +92,7 @@ class DAryHeap<T> {
 		fix_up( length++ );
 	}
 	
-	public inline function get() : T {
+	public inline function get() : Null<T> {
 		if ( not_empty() ) {
 			exchange( 0, --length );
 			fix_down( 0 );

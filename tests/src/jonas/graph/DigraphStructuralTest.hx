@@ -136,11 +136,9 @@ class DigraphStructuralTest<D : Digraph<V, A>, V : Vertex, A : Arc> extends Test
 	}
 	
 	public function test_get_vertex_null() : Void {
-		#if ( cpp || js )
-		// on these targets, passing a null to an Int results in 0
-		assertTrue( try { d.get_vertex( null ); true; } catch ( e : Dynamic ) { false; } );
-		#else
-		// dynmic targets, that know the diference between null and 0
+		// on static targets, passing a null to an Int results in 0, which may be a valid vertex
+		#if ( neko || js || java )
+		// for the dynamic targets, that know the diference between null and 0
 		assertFalse( try { d.get_vertex( null ); true; } catch ( e : Dynamic ) { false; } );
 		#end
 	}
