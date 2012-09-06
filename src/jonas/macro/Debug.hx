@@ -36,7 +36,7 @@ class Debug {
 	@:macro public static function assertIf( cond : ExprOf<Bool>, v : Expr ) {
 		#if debug
 		var str = Context.makeExpr( 'Assert "' +
-			tink.macro.tools.ExprTools.toString( v ) +
+			ExprTools.toString( v ) +
 			'": ', v.pos );
 		return make( EIf( cond, trce( make( EBinop( OpAdd, str, v ) ) ), null ) );
 		#else
@@ -48,7 +48,7 @@ class Debug {
 	@:macro public static function assert( v : Expr ) {
 		#if debug
 		var str = Context.makeExpr( 'Assert "' +
-			tink.macro.tools.ExprTools.toString( v ) +
+			ExprTools.toString( v ) +
 			'": ', Context.currentPos() );
 		return trce( make( EBinop( OpAdd, str, v ) ) );
 		#else
