@@ -1,5 +1,3 @@
--cmd mkdir -p bin/neko
---next
 -cp src
 -lib jonas-haxe
 -main Tests
