@@ -5,7 +5,10 @@ import haxe.io.BytesBuffer;
 import haxe.io.Input;
 import jonas.macro.Debug;
 
-/* RFC 4180 compliant reader for Comma-Separated Values (CSV) streams
+/* RFC 4180 quasi-compliant reader for Comma-Separated Values (CSV) streams
+   The limitations are
+    - all records must end in a proper newline sequence
+    - fields stated by a quote will be treated as quoted
    Copyright 2012 Jonas Malaco Filho
    Licensed under the MIT license. Check LICENSE.txt for more information. */
 class Reader {
@@ -28,7 +31,7 @@ class Reader {
 			this.nl1 = nl.charCodeAt( 1 );
 	}
 
-	public function readLine() : Array<String> {
+	public function readRecord() : Array<String> {
 		// Debug.assert( this );
 		var fs = [];
 		var f = new BytesBuffer();
@@ -38,7 +41,7 @@ class Reader {
 		var last = -1; // last read byte
 		while ( true ) {
 			c = i.readByte();
-			// Debug.assert( [ qtd, last, c, String.fromCharCode( c ) ] );
+			// Debug.assert( [ qtd, last, beforeLast, c, String.fromCharCode( c ) ] );
 			// Debug.assertTrue( c!=qte );
 			switch ( c ) {
 				case sep : // field separator
@@ -57,7 +60,7 @@ class Reader {
 						f.addByte( last );
 					if ( qtd && last==qte ) {
 						f.addByte( c );
-						c = -1;
+						c = beforeLast;
 					}
 					else if ( !qtd && last!=-1 )
 						f.addByte( c );

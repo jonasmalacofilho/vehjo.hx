@@ -1,4 +1,0 @@
--cp src
--lib jonas-haxe
--main Tests
--cpp bin/cpp
