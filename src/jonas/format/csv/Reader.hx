@@ -21,14 +21,19 @@ class Reader {
 
 	public function new( i : Input, ?sep=',', ?qte='"', ?nl='\r\n' ) {
 		Debug.assertTrue( sep.length==1 );
-		Debug.assertTrue( qte.length==1 );
+		Debug.assertTrue( qte.length==1 || qte.length==-1 );
 		Debug.assertTrue( nl.length==1 || nl.length==2 );
 		this.i = i;
 		this.sep = sep.charCodeAt( 0 );
-		this.qte = qte.charCodeAt( 0 );
+		if ( qte.length > 0 )
+			this.qte = qte.charCodeAt( 0 );
+		else
+			this.qte = -1;
 		this.nl0 = nl.charCodeAt( 0 );
 		if ( nl.length > 1 )
 			this.nl1 = nl.charCodeAt( 1 );
+		else
+			this.nl1 = -1;
 	}
 
 	public function readRecord() : Array<String> {
@@ -69,7 +74,7 @@ class Reader {
 						c = sep;
 					}
 				case nl0 : // newline separator (first byte)
-					if ( ( !qtd || last==qte ) && nl1==null ) {
+					if ( ( !qtd || last==qte ) && nl1==-1 ) {
 						fs.push( f.getBytes().toString() );
 						c = -1;
 						qtd = false;
