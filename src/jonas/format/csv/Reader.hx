@@ -36,6 +36,28 @@ class Reader {
 			this.nl1 = -1;
 	}
 
+	public function readData( ?headers=true ) : Array<Dynamic> {
+		var h = headers ? readRecord() : null;
+		var data = [];
+		while ( true ) try {
+			var r = readRecord();
+			// Debug.assert( r );
+			Debug.assertTrue( h==null || r.length==h.length );
+			var x : Dynamic = cast {};
+			for ( i in 0...r.length )
+				if ( h==null )
+					Reflect.setField( x, 'V'+(i+1), r[i] );
+				else
+					Reflect.setField( x, h[i], r[i] );
+			// Debug.assert( x );
+			data.push( x );
+		}
+		catch ( e : haxe.io.Eof ) {
+			break;
+		}
+		return data;
+	}
+
 	public function readRecord() : Array<String> {
 		// Debug.assert( this );
 		var fs = [];
