@@ -7,7 +7,6 @@ import jonas.macro.Debug;
 
 /* RFC 4180 quasi-compliant reader for Comma-Separated Values (CSV) streams
    The limitations are
-    - all records must end in a proper newline sequence
     - fields stated by a quote will be treated as quoted
    Copyright 2012 Jonas Malaco Filho
    Licensed under the MIT license. Check LICENSE.txt for more information. */
@@ -19,7 +18,7 @@ class Reader {
 	var nl0 : Int;
 	var nl1 : Int;
 
-	public function new( i : Input, ?sep=',', ?qte='"', ?nl='\r\n' ) {
+	public function new( i : Input, ?sep=',', ?qte='"', ?nl='\n' ) {
 		Debug.assertTrue( sep.length==1 );
 		Debug.assertTrue( qte.length==1 || qte.length==-1 );
 		Debug.assertTrue( nl.length==1 || nl.length==2 );
@@ -67,7 +66,17 @@ class Reader {
 		var beforeLast = -1; // before last read byte
 		var last = -1; // last read byte
 		while ( true ) {
-			c = i.readByte();
+			try {
+				c = i.readByte();
+			}
+			catch( e : haxe.io.Eof ) {
+				var cf = f.getBytes();
+				if ( cf.length==0 )
+					throw new haxe.io.Eof();
+				else
+					fs.push( cf.toString() );
+				break;
+			}
 			// Debug.assert( [ qtd, last, beforeLast, c, String.fromCharCode( c ) ] );
 			// Debug.assertTrue( c!=qte );
 			switch ( c ) {

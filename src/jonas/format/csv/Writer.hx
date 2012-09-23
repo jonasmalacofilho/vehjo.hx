@@ -12,7 +12,7 @@ class Writer {
 	var qte : String;
 	var nl : String;
 
-	public function new( o : Output, ?sep=',', ?qte='"', ?nl='\r\n' ) {
+	public function new( o : Output, ?sep=',', ?qte='"', ?nl='\n' ) {
 		this.o = o;
 		this.sep = sep;
 		this.qte = qte;

@@ -24,17 +24,32 @@ class TestCSV extends jonas.unit.TestCase {
 	}
 
 	function testReaderBasic() {
+		// ending on newline
 		assertEquals( d1[1], readEverything( d1[0], ',', '"', 'NL' ) );
 		assertEquals( d1[1], readEverything( d1[0].split( 'NL' ).join( 'N' ), ',', '"', 'N' ) );
 		assertEquals( d2[1], readEverything( d2[0], ',', '"', 'NL' ) );
 		assertEquals( d2[1], readEverything( d2[0].split( 'NL' ).join( 'N' ), ',', '"', 'N' ) );
+
+		// ending on EOF
+		assertEquals( d1[1], readEverything( d1[0].substr( 0, d1[0].length-2 ), ',', '"', 'NL' ) );
+		assertEquals( d1[1], readEverything( d1[0].substr( 0, d1[0].length-2 ).split( 'NL' ).join( 'N' ), ',', '"', 'N' ) );
+		assertEquals( d2[1], readEverything( d2[0].substr( 0, d2[0].length-2 ), ',', '"', 'NL' ) );
+		assertEquals( d2[1], readEverything( d2[0].substr( 0, d2[0].length-2 ).split( 'NL' ).join( 'N' ), ',', '"', 'N' ) );
 	}
 
 	function testReaderQuotes() {
+		// ending on newline
 		assertEquals( d3[1], readEverything( d3[0], ',', '"', 'NL' ) );
 		assertEquals( d3[1], readEverything( d3[0].split( 'NL' ).join( 'N' ), ',', '"', 'N' ) );
 		assertEquals( d4[1], readEverything( d4[0], ',', '"', 'NL' ) );
 		assertEquals( d4[1].split( 'NL' ).join( 'N' ), readEverything( d4[0].split( 'NL' ).join( 'N' ), ',', '"', 'N' ) );
+
+		// ending on eof
+		assertEquals( d3[1], readEverything( d3[0].substr( 0, d3[0].length-2 ), ',', '"', 'NL' ) );
+		assertEquals( d3[1], readEverything( d3[0].substr( 0, d3[0].length-2 ).split( 'NL' ).join( 'N' ), ',', '"', 'N' ) );
+		assertEquals( d4[1], readEverything( d4[0].substr( 0, d4[0].length-2 ), ',', '"', 'NL' ) );
+		assertEquals( d4[1].split( 'NL' ).join( 'N' ), readEverything( d4[0].substr( 0, d4[0].length-2 ).split( 'NL' ).join( 'N' ), ',', '"', 'N' ) );
+
 		// assertEquals( d5[1], readEverything( d5[0], ',', '"', 'NL' ) );
 		// assertEquals( d5[1], readEverything( d5[0].split( 'NL' ).join( 'N' ), ',', '"', 'N' ) );
 	}
