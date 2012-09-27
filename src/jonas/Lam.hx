@@ -1,6 +1,6 @@
 package jonas;
 
-class Lambda2 {
+class Lam {
 
 	public static function map<A,B>( it: Iterable<A>, f: A -> B ): Array<B> {
 		var y = [];
@@ -23,6 +23,12 @@ class Lambda2 {
 			if ( f( x ) )
 				y.push( x );
 		return y;
+	}
+
+	public static function fold<A,B>( it: Iterable<A>, f: A -> B -> B, first: B ): B {
+		for ( x in it )
+			first = f( x, first );
+		return first;
 	}
 
 }
