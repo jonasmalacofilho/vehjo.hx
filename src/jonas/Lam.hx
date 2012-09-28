@@ -31,4 +31,15 @@ class Lam {
 		return first;
 	}
 
+	public static function it<A>( itr: Iterator<A> ): Iterable<A> {
+		return { iterator: function () return itr };
+	}
+
+	public static function array<A>( it: Iterable<A> ): Array<A> {
+		var y = [];
+		for ( x in it )
+			y.push( x );
+		return y;
+	}
+
 }

@@ -27,4 +27,22 @@ class Writer {
 				o.writeString( qte + data[i].split( qte ).join( qte+qte ) + qte + nl );
 	}
 
+	public function dump( it: Iterable<Dynamic>, ?headers=true ) {
+		if ( !it.iterator().hasNext() )
+			return;
+		var fields = Reflect.fields( it.iterator().next() );
+		if ( headers )
+			writeRecord( fields );
+		for ( x in it ) {
+			writeRecord( Lam.map( fields, function ( f ) return Std.string( Reflect.field( x, f ) ) ) );
+		}
+	}
+
+	public static function stringDump<A>( it: Iterable<A>, ?headers=true, ?sep=',', ?qte='"', ?nl='\n' ): String {
+		var out = new haxe.io.BytesOutput();
+		var writer = new Writer( out, sep, qte, nl );
+		writer.dump( it, headers );
+		return out.getBytes().toString();
+	}
+
 }
