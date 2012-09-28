@@ -44,7 +44,7 @@ class Reader {
 			Debug.assertTrue( h==null || r.length==h.length );
 			var x : Dynamic = cast {};
 			for ( i in 0...r.length )
-				if ( h==null )
+				if ( h==null || h[i]==null )
 					Reflect.setField( x, 'V'+(i+1), r[i] );
 				else
 					Reflect.setField( x, h[i], r[i] );

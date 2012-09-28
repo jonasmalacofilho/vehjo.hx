@@ -1,5 +1,8 @@
 package jonas;
 
+/* Lambda (outputing Array) + enhancements
+   Copyright 2012 Jonas Malaco Filho
+   Licensed under the MIT license. Check LICENSE.txt for more information. */
 class Lam {
 
 	public static function map<A,B>( it: Iterable<A>, f: A -> B ): Array<B> {

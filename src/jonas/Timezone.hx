@@ -1,5 +1,8 @@
 package jonas;
 
+/* Timezone computation (local and current/taking into account daylight savings time)
+   Copyright 2012 Jonas Malaco Filho
+   Licensed under the MIT license. Check LICENSE.txt for more information. */
 class Timezone {
 	
 	public static function localTimezone() : Float {
@@ -8,7 +11,7 @@ class Timezone {
 		return Math.min( x1, x2 );
 	}
 
-	public static function currectTimezone( ?date=null ) : Float {
+	public static function currentTimezone( ?date=null ) : Float {
 		if ( date==null )
 			date = Date.now();
 		date = new Date( date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0 );
