@@ -5,14 +5,14 @@ package jonas;
    Licensed under the MIT license. Check LICENSE.txt for more information. */
 class Lam {
 
-	public static function map<A,B>( it: Iterable<A>, f: A -> B ): Array<B> {
+	public static inline function map<A,B>( it: Iterable<A>, f: A -> B ): Array<B> {
 		var y = [];
 		for ( x in it )
 			y.push( f( x ) );
 		return y;
 	}
 
-	public static function mapi<A,B>( it: Iterable<A>, f: Int -> A -> B ): Array<B> {
+	public static inline function mapi<A,B>( it: Iterable<A>, f: Int -> A -> B ): Array<B> {
 		var y = [];
 		var i = 0;
 		for ( x in it )
@@ -20,7 +20,7 @@ class Lam {
 		return y;
 	}
 
-	public static function filter<A>( it: Iterable<A>, f: A -> Bool ): Array<A> {
+	public static inline function filter<A>( it: Iterable<A>, f: A -> Bool ): Array<A> {
 		var y = [];
 		for ( x in it )
 			if ( f( x ) )
@@ -28,21 +28,26 @@ class Lam {
 		return y;
 	}
 
-	public static function fold<A,B>( it: Iterable<A>, f: A -> B -> B, first: B ): B {
+	public static inline function fold<A,B>( it: Iterable<A>, f: A -> B -> B, first: B ): B {
 		for ( x in it )
 			first = f( x, first );
 		return first;
 	}
 
-	public static function it<A>( itr: Iterator<A> ): Iterable<A> {
+	// one use only iterable
+	public static inline function it<A>( itr: Iterator<A> ): Iterable<A> {
 		return { iterator: function () return itr };
 	}
 
-	public static function array<A>( it: Iterable<A> ): Array<A> {
+	public static inline function array<A>( it: Iterable<A> ): Array<A> {
 		var y = [];
 		for ( x in it )
 			y.push( x );
 		return y;
+	}
+
+	public static inline function count<A>( it: Iterable<A> ): Int {
+		return Lam.fold( it, function ( x, f ) return f+1, 0 );
 	}
 
 }

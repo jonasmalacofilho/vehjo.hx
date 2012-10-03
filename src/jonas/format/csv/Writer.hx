@@ -28,13 +28,13 @@ class Writer {
 	}
 
 	public function dump( it: Iterable<Dynamic>, ?headers=true ) {
-		if ( !it.iterator().hasNext() )
-			return;
-		var fields = Reflect.fields( it.iterator().next() );
-		if ( headers )
-			writeRecord( fields );
+		var fields: Array<String> = null;
 		for ( x in it ) {
-			writeRecord( Lam.map( fields, function ( f ) return Std.string( Reflect.field( x, f ) ) ) );
+			if ( headers ) {
+				writeRecord( fields = Reflect.fields( x ) );
+				headers = false;
+			}
+			writeRecord( Lam.map( ( fields!=null ? fields : Reflect.fields( x ) ), function ( f ) return Std.string( Reflect.field( x, f ) ) ) );
 		}
 	}
 
