@@ -1,6 +1,6 @@
-#if macro
-
 package jonas.macro;
+
+#if macro
 
 import haxe.macro.Context;
 import haxe.macro.Expr;
@@ -32,7 +32,7 @@ class ExprTools {
 		#if tink_macros
 		return tink.macro.tools.ExprTools.toString( e );
 		#else
-		Context.warning( "Can't stringfy expr without tink_macros lib", e.pos );
+		Context.warning( "Can't stringfy expr without the tink_macros lib", e.pos );
 		return '';
 		#end
 	}
@@ -41,7 +41,16 @@ class ExprTools {
 		#if tink_macros
 		return tink.macro.tools.ExprTools.ifNull( e, fallback );
 		#else
-		#error "Can't stringfy expr without tink_macros lib"
+		#error "Can't stringfy expr without the tink_macros lib"
+		return '';
+		#end
+	}
+
+	public static function transform( source: Expr, transformer: Expr -> Expr, ?pos: Position ): Expr {
+		#if tink_macros
+		return tink.macro.tools.ExprTools.transform( source, transformer, pos );
+		#else
+		#error "Can't transform expressions without the tink_macros lib"
 		return '';
 		#end
 	}
