@@ -263,6 +263,15 @@ class LazyLambda {
 	}
 
 	/**
+		Returns an iterable from an iterator
+	**/
+	@:macro public static function iterable<A>( it: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
+		return macro {
+			{ iterator: function () return $it };
+		};
+	}
+
+	/**
 		Creates a list from a collection
 	**/
 	@:macro public static function list<A>( it: ExprOf<Iterator<A>> ): ExprOf<List<A>> {
