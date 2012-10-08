@@ -8,7 +8,7 @@ class Statistics {
 	
 	/* i.iterator must be imutable
 	   only if min and max are supplied that i.iterator may have side-effects */
-	public static function hist( i: Iterable<Float>, ?noBins=10, ?min: Float, ?max: Float )
+	public static function hist( i: Iterable<Float>, ?noBins=10, ?min: Null<Float>, ?max: Null<Float> )
 	: { names: Array<Float>, values: Array<Int> } {
 		
 		var _min = Math.POSITIVE_INFINITY;
@@ -21,7 +21,7 @@ class Statistics {
 				if ( x > _max )
 					_max = x;
 			}
-		
+
 		if ( min != null )
 			_min = min;
 		if ( max != null )
@@ -29,7 +29,7 @@ class Statistics {
 
 		var dx = ( _max - _min ) / ( noBins - 1 );
 		var bins = Lam.map( Lam.it( 0...noBins ), function ( i ) return 0 );
-		var binNames = Lam.map( Lam.it( 0...noBins ), function ( i ) return dx*i );
+		var binNames = Lam.map( Lam.it( 0...noBins ), function ( i ) return _min + dx*i );
 
 		var insert = function ( x: Float ) bins[Std.int( ( x - _min )/dx )] += 1;
 		for ( x in i )
