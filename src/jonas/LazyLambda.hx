@@ -14,7 +14,6 @@ using jonas.macro.ExprTools;
 	macro equivalents to the ones in the original Lambda class.
 
 	TODO:
-	- support both Iterable<A> and Iterator<A> as arguments
 	- first: ExprOf<Iterator<A>> -> ExprOf<A>
 	- hash: ? -> ExprOf<Hash<A>>
 	- intHash: ? -> ExprOf<IntHash<A>>
