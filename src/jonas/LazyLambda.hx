@@ -27,25 +27,22 @@ class LazyLambda {
 	/**
 		Creates an array from a collection
 	**/
-	@:macro public static function array<A>( it: ExprOf<Iterator<A>> ): ExprOf<Array<A>> {
-		var iterator = getIterator( it );
-		return macro {
+	@:macro public static function array<A>( it: ExprOf<Iterable<A>> ): ExprOf<Array<A>> {
+		return fixThis( macro {
 			var y = [];
-			for ( x in $iterator )
+			for ( x in $it )
 				y.push( x );
 			y;
-		};
+		} );
 	}
 
 	/**
 		Concatenates two collections
 	**/
-	@:macro public static function concat<A>( it1: ExprOf<Iterator<A>>, it2: ExprOf<Iterator<A>> ): ExprOf<Iterator<A>> {
-		var nxit = getIterator( it2 );
-		var fsit = getIterator( it1 );
-		return macro {
-			var nxit = $nxit;
-			var fsit = $fsit;
+	@:macro public static function concat<A>( it1: ExprOf<Iterable<A>>, it2: ExprOf<Iterable<A>> ): ExprOf<Iterable<A>> {
+		return buildIterable( macro {
+			var nxit = $it2.iterator();
+			var fsit = $it1.iterator();
 			{
 				hasNext: function () {
 					if ( fsit.hasNext() )
@@ -59,40 +56,36 @@ class LazyLambda {
 						return false;
 				},
 				next: function () return fsit.next()
-			}
-		};
+			};
+		} );
 	}
 
 	/**
 		Counts the total number of elements in a collection
 	**/
-	@:macro public static function count<A>( it: ExprOf<Iterator<A>> ): ExprOf<Int> {
-		var iterator = getIterator( it );
-		return macro {
+	@:macro public static function count<A>( it: ExprOf<Iterable<A>> ): ExprOf<Int> {
+		return fixThis( macro {
 			var i = 0;
-			for ( x in $iterator )
+			for ( x in $it )
 				i++;
 			i;
-		};
+		} );
 	}
 
 	/**
 		Tells if a collection does not contain any elements
 	**/
-	@:macro public static function empty<A>( it: ExprOf<Iterator<A>> ): ExprOf<Bool> {
-		var iterator = getIterator( it );
-		return macro {
-			!$iterator.hasNext();
-		};
+	@:macro public static function empty<A>( it: ExprOf<Iterable<A>> ): ExprOf<Bool> {
+		return fixThis( macro {
+			!$it.iterator().hasNext();
+		} );
 	}
 
 	/**
 		Filters a collection using the supplied expression "filter" 
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function filter<A>( it: ExprOf<Iterator<A>>, filter: ExprOf<Bool> ): ExprOf<Iterator<A>> {
-		var iterator = getIterator( it );
-
+	@:macro public static function filter<A>( it: ExprOf<Iterable<A>>, filter: ExprOf<Bool> ): ExprOf<Iterable<A>> {
 		var inspect = inspectIdentifiers( filter );
 		filter = inspect.uExpr;
 		var exposedIndex = false;
@@ -102,13 +95,13 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return macro {
-				var it = $iterator;
+			return buildIterable( macro {
+				var it = $it.iterator();
 				var nx = null;
 				var __lazylambda__i = 0;
 				{
 					hasNext: function () {
-						while ( it.hasNext() && nx == null ) {
+						while ( nx == null && it.hasNext() ) {
 							var __lazylambda__x = it.next();
 							if ( $filter ) {
 								nx = __lazylambda__x;
@@ -117,46 +110,44 @@ class LazyLambda {
 							}
 							__lazylambda__i++;
 						}
-						return false;
+						return nx != null;
 					},
 					next: function () {
 						var next = nx;
 						nx = null;
 						return next;
 					}
-				}
-			};
+				};
+			} );
 		else
-			return macro {
-				var it = $iterator;
+			return buildIterable( macro {
+				var it = $it.iterator();
 				var nx = null;
 				{
 					hasNext: function () {
-						while ( it.hasNext() && nx == null ) {
+						while ( nx == null && it.hasNext() ) {
 							var __lazylambda__x = it.next();
 							if ( $filter ) {
 								nx = __lazylambda__x;
 								return true;
 							}
 						}
-						return false;
+						return nx != null;
 					},
 					next: function () {
 						var next = nx;
 						nx = null;
 						return next;
 					}
-				}
-			};
+				};
+			} );
 	}
 
 	/**
 		Returns the first element in a collection that matches the expression "cond"
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function find<A>( it: ExprOf<Iterator<A>>, cond: ExprOf<Bool> ): ExprOf<Null<Int>> {
-		var iterator = getIterator( it );
-
+	@:macro public static function find<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Null<Int>> {
 		var inspect = inspectIdentifiers( cond );
 		cond = inspect.uExpr;
 		var exposedIndex = false;
@@ -166,10 +157,10 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return macro {
+			return fixThis( macro {
 				var __lazylambda__i = 0;
 				var ret = null;
-				for ( __lazylambda__x in $iterator ) {
+				for ( __lazylambda__x in $it ) {
 					if ( $cond ) {
 						ret = __lazylambda__x;
 						break;
@@ -177,27 +168,25 @@ class LazyLambda {
 					__lazylambda__i++;
 				}
 				ret;
-			};
+			} );
 		else
-			return macro {
+			return fixThis( macro {
 				var ret = null;
-				for ( __lazylambda__x in $iterator ) {
+				for ( __lazylambda__x in $it ) {
 					if ( $cond ) {
 						ret = __lazylambda__x;
 						break;
 					}
 				}
 				ret;
-			};
+			} );
 	}
 
 	/**
 		Functional fold
 		Exposed variables: $pre (previous return value), $x (element) and $i (element index)
 	**/
-	@:macro public static function fold<A,B>( it: ExprOf<Iterator<A>>, fold: ExprOf<B>, first: ExprOf<B> ): ExprOf<B> {
-		var iterator = getIterator( it );
-
+	@:macro public static function fold<A,B>( it: ExprOf<Iterable<A>>, fold: ExprOf<B>, first: ExprOf<B> ): ExprOf<B> {
 		var inspect = inspectIdentifiers( fold );
 		fold = inspect.uExpr;
 		var exposedIndex = false;
@@ -207,32 +196,30 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return macro {
+			return fixThis( macro {
 				var __lazylambda__pre = $first;
 				var __lazylambda__i = 0;
-				for ( __lazylambda__x in $iterator ) {
+				for ( __lazylambda__x in $it ) {
 					__lazylambda__pre = $fold;
 					__lazylambda__i++;
 				}
 				__lazylambda__pre;
-			};
+			} );
 		else
-			return macro {
+			return fixThis( macro {
 				var __lazylambda__pre = $first;
-				for ( __lazylambda__x in $iterator ) {
+				for ( __lazylambda__x in $it ) {
 					__lazylambda__pre = $fold;
 				}
 				__lazylambda__pre;
-			};
+			} );
 	}
 	
 	/**
 		Tells if the expression "cond" evaluates to true for ALL elements in a collection
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function holds<A>( it: ExprOf<Iterator<A>>, cond: ExprOf<Bool> ): ExprOf<Bool> {
-		var iterator = getIterator( it );
-
+	@:macro public static function holds<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Bool> {
 		var inspect = inspectIdentifiers( cond );
 		cond = inspect.uExpr;
 		var exposedIndex = false;
@@ -242,10 +229,10 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return macro {
+			return fixThis( macro {
 				var ret = true;
 				var __lazylambda__i = 0;
-				for ( __lazylambda__x in $iterator ) {
+				for ( __lazylambda__x in $it ) {
 					if ( !$cond ) {
 						ret = false;
 						break;
@@ -253,27 +240,25 @@ class LazyLambda {
 					__lazylambda__i++;
 				}
 				ret;
-			};
+			} );
 		else
-			return macro {
+			return fixThis( macro {
 				var ret = true;
-				for ( __lazylambda__x in $iterator ) {
+				for ( __lazylambda__x in $it ) {
 					if ( !$cond ) {
 						ret = false;
 						break;
 					}
 				}
 				ret;
-			};
+			} );
 	}
 
 	/**
 		Tells if the expression "cond" evaluates to true for AT LEAST ONE element in a collection
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function holdsOnce<A>( it: ExprOf<Iterator<A>>, cond: ExprOf<Bool> ): ExprOf<Bool> {
-		var iterator = getIterator( it );
-
+	@:macro public static function holdsOnce<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Bool> {
 		var inspect = inspectIdentifiers( cond );
 		cond = inspect.uExpr;
 		var exposedIndex = false;
@@ -283,10 +268,10 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return macro {
+			return fixThis( macro {
 				var ret = false;
 				var __lazylambda__i = 0;
-				for ( __lazylambda__x in $iterator ) {
+				for ( __lazylambda__x in $it ) {
 					if ( $cond ) {
 						ret = true;
 						break;
@@ -294,34 +279,32 @@ class LazyLambda {
 					__lazylambda__i++;
 				}
 				ret;
-			};
+			} );
 		else
-			return macro {
+			return fixThis( macro {
 				var ret = false;
-				for ( __lazylambda__x in $iterator ) {
+				for ( __lazylambda__x in $it ) {
 					if ( $cond ) {
 						ret = true;
 						break;
 					}
 				}
 				ret;
-			};
+			} );
 	}
 
 	/**
 		Returns the index of the first element in a collection that matches the expression "cond"
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function indexOf<A>( it: ExprOf<Iterator<A>>, cond: ExprOf<Bool> ): ExprOf<Int> {
-		var iterator = getIterator( it );
-
+	@:macro public static function indexOf<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Int> {
 		var inspect = inspectIdentifiers( cond );
 		cond = inspect.uExpr;
 
-		return macro {
+		return fixThis( macro {
 			var __lazylambda__i = 0;
 			var ret = -1;
-			for ( __lazylambda__x in $iterator ) {
+			for ( __lazylambda__x in $it ) {
 				if ( $cond ) {
 					ret = __lazylambda__i;
 					break;
@@ -329,16 +312,14 @@ class LazyLambda {
 				__lazylambda__i++;
 			}
 			ret;
-		};
+		} );
 	}
 
 	/**
 		Executes the expression "expr" for each element in a collection
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function iter<A>( it: ExprOf<Iterator<A>>, expr ): ExprOf<Void> {
-		var iterator = getIterator( it );
-
+	@:macro public static function iter<A>( it: ExprOf<Iterable<A>>, expr ): ExprOf<Void> {
 		var inspect = inspectIdentifiers( expr );
 		expr = inspect.uExpr;
 		var exposedIndex = false;
@@ -348,52 +329,49 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return macro {
+			return fixThis( macro {
 				var __lazylambda__i = 0;
-				for ( __lazylambda__x in $iterator ) {
+				for ( __lazylambda__x in $it ) {
 					$expr;
 					__lazylambda__i++;
 				}
 				null;
-			};
+			} );
 		else
-			return macro {
-				for ( __lazylambda__x in $iterator )
+			return fixThis( macro {
+				for ( __lazylambda__x in $it )
 					$expr;
 				null;
-			};
+			} );
 	}
 
 	/**
-		Returns an iterable from an iterator
+		Transforms an iterator into a lazy iterable
+		Behare of side-effects on the expression "it"
 	**/
-	@:macro public static function iterable<A>( it: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
-		var iterator = getIterator( it );
-		return macro {
-			{ iterator: function () return $iterator };
-		};
+	@:macro public static function lazy<A>( it: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
+		return fixThis( macro {
+			{ iterator: function () return $it };
+		} );
 	}
 
 	/**
 		Creates a list from a collection
 	**/
-	@:macro public static function list<A>( it: ExprOf<Iterator<A>> ): ExprOf<List<A>> {
-		var iterator = getIterator( it );
-		return macro {
+	@:macro public static function list<A>( it: ExprOf<Iterable<A>> ): ExprOf<List<A>> {
+		return fixThis( macro {
 			var y = new List();
-			for ( x in $iterator )
+			for ( x in $it )
 				y.add( x );
 			y;
-		};
+		} );
 	}
 
 	/**
 		Maps every element in a colletion into a new element, using the expression "map"
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function map<A,B>( it: ExprOf<Iterator<A>>, map: ExprOf<B> ): ExprOf<Iterator<B>> {
-		var iterator = getIterator( it );
-
+	@:macro public static function map<A,B>( it: ExprOf<Iterable<A>>, map: ExprOf<B> ): ExprOf<Iterable<B>> {
 		var inspect = inspectIdentifiers( map );
 		map = inspect.uExpr;
 		var exposedIndex = false;
@@ -401,10 +379,22 @@ class LazyLambda {
 			switch ( x ) {
 				case IINDEX: exposedIndex = true;
 			}
-
+		var itr = getIterator( it );
+		// trace(
+		// 	buildIterable( macro {
+		// 		var it = $itr;
+		// 		{
+		// 			hasNext: it.hasNext,
+		// 			next: function () {
+		// 				var __lazylambda__x = it.next();
+		// 				return $map;
+		// 			}
+		// 		};
+		// 	} ).toString()
+		// );
 		if ( exposedIndex )
-			return macro {
-				var it = $iterator;
+			return buildIterable( macro {
+				var it = $itr;
 				var __lazylambda__i = 0;
 				{
 					hasNext: it.hasNext,
@@ -414,19 +404,19 @@ class LazyLambda {
 						__lazylambda__i++;
 						return ret;
 					}
-				}
-			};
+				};
+			} );
 		else
-			return macro {
-				var it = $iterator;
+			return buildIterable( macro {
+				var it = $itr;
 				{
 					hasNext: it.hasNext,
 					next: function () {
 						var __lazylambda__x = it.next();
 						return $map;
 					}
-				}
-			};
+				};
+			} );
 	}
 
 #if macro
@@ -434,10 +424,6 @@ class LazyLambda {
 	static inline var IINDEX = '$i';
 	static inline var IELEMENT = '$x';
 	static inline var IPREVALUE = '$pre';
-
-	static function getIterator<A>( x: Expr ): ExprOf<Iterator<A>> {
-		return x;
-	}
 
 	static function inspectIdentifiers( expr: Expr ): { uExpr: Expr, found: Array<String> } {
 		var found = [];
@@ -457,9 +443,38 @@ class LazyLambda {
 						default: x;
 					};
 				default: x;
-			}
+			};
 		} );
 		return { uExpr: uExpr, found: found };
+	}
+
+	static function buildIterable<A>( x: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
+		return fixThis( macro { iterator: function () return $x } );
+	}
+
+	static function fixThis<A>( x: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
+		return ExprTools.transform( x, function ( x ) {
+			return switch ( x.expr ) {
+				case EConst( c ):
+					switch ( c ) {
+						case CIdent( s ):
+							if ( s=='`' ) {
+								EConst( CIdent( 'this' ) ).make();
+							}
+							else {
+								x;
+							}
+						default: x;
+					};
+				default: x;
+			};
+		} );
+	}
+
+	static function getIterator<A>( x: ExprOf<Iterable<A>> ): ExprOf<Iterator<A>> {
+		// trace( x.pos );
+		// trace( x.toString() );
+		return ECall( EField( x, 'iterator' ).make(), [] ).make();
 	}
 
 #end
