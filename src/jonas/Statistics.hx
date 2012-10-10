@@ -1,5 +1,7 @@
 package jonas;
 
+using jonas.LazyLambda;
+
 /**
 	Statistics
 	Copyright 2012 Jonas Malaco Filho. Licensed under the MIT License. 
@@ -26,14 +28,13 @@ class Statistics {
 			_max = max;
 
 		var dx = ( _max - _min ) / ( noBins - 1 );
-		var bins = Lam.map( Lam.it( 0...noBins ), function ( i ) return 0 );
-		var lowerNames = Lam.map( Lam.it( 0...noBins ), function ( i ) return _min + dx*i );
+		var bins = ( 0...noBins ).lazy().map( 0 ).array();
+		var lowerNames = bins.map( _min + dx * $x ).array();
 
-		var insert = function ( x: Float ) bins[Std.int( ( x - _min )/dx )] += 1;
 		for ( x in i )
 			if ( x >= _min && x <= _max )
-				insert( x );
-		
+				bins[Std.int( ( x - _min )/dx )] += 1;
+
 		return { width: dx, lowerNames: lowerNames, values: bins };
 	}
 
