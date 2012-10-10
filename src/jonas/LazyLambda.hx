@@ -27,13 +27,8 @@ class LazyLambda {
 	/**
 		Creates an array from a collection
 	**/
-	@:macro public static function array<A>( it: ExprOf<Iterable<A>> ): ExprOf<Array<A>> {
-		return fixThis( macro {
-			var y = [];
-			for ( x in $it )
-				y.push( x );
-			y;
-		} );
+	public static function array<A>( it: Iterable<A> ): Array<A> {
+		return fold( it, { $pre.push( $x ); $pre; }, [] );
 	}
 
 	/**
@@ -63,22 +58,15 @@ class LazyLambda {
 	/**
 		Counts the total number of elements in a collection
 	**/
-	@:macro public static function count<A>( it: ExprOf<Iterable<A>> ): ExprOf<Int> {
-		return fixThis( macro {
-			var i = 0;
-			for ( x in $it )
-				i++;
-			i;
-		} );
+	public static function count<A>( it: Iterable<A> ): Int {
+		return fold( it, $pre + 1, 0 );
 	}
 
 	/**
 		Tells if a collection does not contain any elements
 	**/
-	@:macro public static function empty<A>( it: ExprOf<Iterable<A>> ): ExprOf<Bool> {
-		return fixThis( macro {
-			!$it.iterator().hasNext();
-		} );
+	public static function empty<A>( it: Iterable<A> ): Bool {
+		return it.iterator().hasNext();
 	}
 
 	/**
@@ -358,13 +346,8 @@ class LazyLambda {
 	/**
 		Creates a list from a collection
 	**/
-	@:macro public static function list<A>( it: ExprOf<Iterable<A>> ): ExprOf<List<A>> {
-		return fixThis( macro {
-			var y = new List();
-			for ( x in $it )
-				y.add( x );
-			y;
-		} );
+	public static function list<A>( it: Iterable<A> ): List<A> {
+		return fold( it, { $pre.add( $x ); $pre; }, new List<A>() );
 	}
 
 	/**
@@ -452,7 +435,7 @@ class LazyLambda {
 		return fixThis( macro { iterator: function () return $x } );
 	}
 
-	static function fixThis<A>( x: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
+	static function fixThis( x: Expr ): Expr {
 		return ExprTools.transform( x, function ( x ) {
 			return switch ( x.expr ) {
 				case EConst( c ):
