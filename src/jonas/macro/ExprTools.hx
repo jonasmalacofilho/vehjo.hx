@@ -55,6 +55,10 @@ class ExprTools {
 		#end
 	}
 
+	public static function changePos( e: Expr, p: Position ): Expr {
+		return make( e.expr, p );
+	}
+
 }
 
 #end

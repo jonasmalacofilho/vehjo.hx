@@ -15,8 +15,6 @@ using jonas.macro.ExprTools;
 
 	TODO:
 	- first: ExprOf<Iterator<A>> -> ExprOf<A>
-	- hash: ? -> ExprOf<Hash<A>>
-	- intHash: ? -> ExprOf<IntHash<A>>
 	- pair: ExprOf<Iterator<A>> -> ExprOF<Iterator<B>> -> ExprOf<Iterator<C>>
 
 	Copyright 2012 Jonas Malaco Filho. Licensed under the MIT License. 
@@ -26,7 +24,7 @@ class LazyLambda {
 	/**
 		Creates an array from a collection
 	**/
-	public static function array<A>( it: Iterable<A> ): Array<A> {
+	public static inline function array<A>( it: Iterable<A> ): Array<A> {
 		return fold( it, { $pre.push( $x ); $pre; }, [] );
 	}
 
@@ -34,37 +32,46 @@ class LazyLambda {
 		Concatenates two collections
 	**/
 	@:macro public static function concat<A>( it1: ExprOf<Iterable<A>>, it2: ExprOf<Iterable<A>> ): ExprOf<Iterable<A>> {
+		var itr2 = getIterator( it2 );
+		var itr1 = getIterator( it1 );
 		return buildIterable( macro {
-			var nxit = $it2.iterator();
-			var fsit = $it1.iterator();
+			var __lazy_lambda__nxit = $itr2;
+			var __lazy_lambda__fsit = $itr1;
 			{
 				hasNext: function () {
-					if ( fsit.hasNext() )
+					if ( __lazy_lambda__fsit.hasNext() )
 						return true;
-					else if ( nxit != null ) {
-						fsit = nxit;
-						nxit = null;
-						return fsit.hasNext();
+					else if ( __lazy_lambda__nxit != null ) {
+						__lazy_lambda__fsit = __lazy_lambda__nxit;
+						__lazy_lambda__nxit = null;
+						return __lazy_lambda__fsit.hasNext();
 					}
 					else
 						return false;
 				},
-				next: function () return fsit.next()
+				next: function () return __lazy_lambda__fsit.next()
 			};
-		} );
+		} ).changePos( it1.pos );
+	}
+
+	/**
+		Force a lazy concat of an Array with some other Iterable when using "using"
+	**/
+	public static inline function lazyConcat<A>( a1: Array<A>, a2: Iterable<A> ): Iterable<A> {
+		return concat( a1, a2 );
 	}
 
 	/**
 		Counts the total number of elements in a collection
 	**/
-	public static function count<A>( it: Iterable<A> ): Int {
+	public static inline function count<A>( it: Iterable<A> ): Int {
 		return fold( it, $pre + 1, 0 );
 	}
 
 	/**
 		Tells if a collection does not contain any elements
 	**/
-	public static function empty<A>( it: Iterable<A> ): Bool {
+	public static inline function empty<A>( it: Iterable<A> ): Bool {
 		return it.iterator().hasNext();
 	}
 
@@ -80,54 +87,54 @@ class LazyLambda {
 			switch ( x ) {
 				case IINDEX: exposedIndex = true;
 			}
-
+		var itr = getIterator( it );
 		if ( exposedIndex )
 			return buildIterable( macro {
-				var it = $it.iterator();
-				var nx = null;
-				var __lazylambda__i = 0;
+				var __lazy_lambda__it = $itr;
+				var __lazy_lambda__nx = null;
+				var __lazy_lambda__i = 0;
 				{
 					hasNext: function () {
-						while ( nx == null && it.hasNext() ) {
-							var __lazylambda__x = it.next();
+						while ( __lazy_lambda__nx == null && __lazy_lambda__it.hasNext() ) {
+							var __lazy_lambda__x = __lazy_lambda__it.next();
 							if ( $filter ) {
-								nx = __lazylambda__x;
-								__lazylambda__i++;
+								__lazy_lambda__nx = __lazy_lambda__x;
+								__lazy_lambda__i++;
 								return true;
 							}
-							__lazylambda__i++;
+							__lazy_lambda__i++;
 						}
-						return nx != null;
+						return __lazy_lambda__nx != null;
 					},
 					next: function () {
-						var next = nx;
-						nx = null;
+						var next = __lazy_lambda__nx;
+						__lazy_lambda__nx = null;
 						return next;
 					}
 				};
-			} );
+			} ).changePos( it.pos );
 		else
 			return buildIterable( macro {
-				var it = $it.iterator();
-				var nx = null;
+				var __lazy_lambda__it = $itr;
+				var __lazy_lambda__nx = null;
 				{
 					hasNext: function () {
-						while ( nx == null && it.hasNext() ) {
-							var __lazylambda__x = it.next();
+						while ( __lazy_lambda__nx == null && __lazy_lambda__it.hasNext() ) {
+							var __lazy_lambda__x = __lazy_lambda__it.next();
 							if ( $filter ) {
-								nx = __lazylambda__x;
+								__lazy_lambda__nx = __lazy_lambda__x;
 								return true;
 							}
 						}
-						return nx != null;
+						return __lazy_lambda__nx != null;
 					},
 					next: function () {
-						var next = nx;
-						nx = null;
+						var next = __lazy_lambda__nx;
+						__lazy_lambda__nx = null;
 						return next;
 					}
 				};
-			} );
+			} ).changePos( it.pos );
 	}
 
 	/**
@@ -145,28 +152,28 @@ class LazyLambda {
 
 		if ( exposedIndex )
 			return fixThis( macro {
-				var __lazylambda__i = 0;
-				var ret = null;
-				for ( __lazylambda__x in $it ) {
+				var __lazy_lambda__i = 0;
+				var __lazy_lambda__ret = null;
+				for ( __lazy_lambda__x in $it.iterator() ) {
 					if ( $cond ) {
-						ret = __lazylambda__x;
+						__lazy_lambda__ret = __lazy_lambda__x;
 						break;
 					}
-					__lazylambda__i++;
+					__lazy_lambda__i++;
 				}
-				ret;
-			} );
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
 		else
 			return fixThis( macro {
-				var ret = null;
-				for ( __lazylambda__x in $it ) {
+				var __lazy_lambda__ret = null;
+				for ( __lazy_lambda__x in $it.iterator() ) {
 					if ( $cond ) {
-						ret = __lazylambda__x;
+						__lazy_lambda__ret = __lazy_lambda__x;
 						break;
 					}
 				}
-				ret;
-			} );
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
 	}
 
 	/**
@@ -184,24 +191,82 @@ class LazyLambda {
 
 		if ( exposedIndex )
 			return fixThis( macro {
-				var __lazylambda__pre = $first;
-				var __lazylambda__i = 0;
-				for ( __lazylambda__x in $it ) {
-					__lazylambda__pre = $fold;
-					__lazylambda__i++;
+				var __lazy_lambda__pre = $first;
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__pre = $fold;
+					__lazy_lambda__i++;
 				}
-				__lazylambda__pre;
-			} );
+				__lazy_lambda__pre;
+			} ).changePos( it.pos );
 		else
 			return fixThis( macro {
-				var __lazylambda__pre = $first;
-				for ( __lazylambda__x in $it ) {
-					__lazylambda__pre = $fold;
+				var __lazy_lambda__pre = $first;
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__pre = $fold;
 				}
-				__lazylambda__pre;
-			} );
+				__lazy_lambda__pre;
+			} ).changePos( it.pos );
 	}
 	
+	@:macro public static function hash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<String> ): ExprOf<Hash<A>> {
+		var inspect = inspectIdentifiers( key );
+		key = inspect.uExpr;
+		var exposedIndex = false;
+		for ( x in inspect.found )
+			switch ( x ) {
+				case IINDEX: exposedIndex = true;
+			}
+
+		if ( exposedIndex )
+			return fixThis( macro {
+				var __lazy_lambda__ret = new Hash();
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.set( $key, __lazy_lambda__x );
+					__lazy_lambda__i++;
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+		else
+			return fixThis( macro {
+				var __lazy_lambda__ret = new Hash();
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.set( $key, __lazy_lambda__x );
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+	}
+
+	@:macro public static function intHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<Int> ): ExprOf<IntHash<A>> {
+		var inspect = inspectIdentifiers( key );
+		key = inspect.uExpr;
+		var exposedIndex = false;
+		for ( x in inspect.found )
+			switch ( x ) {
+				case IINDEX: exposedIndex = true;
+			}
+
+		if ( exposedIndex )
+			return fixThis( macro {
+				var __lazy_lambda__ret = new IntHash();
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.set( $key, __lazy_lambda__x );
+					__lazy_lambda__i++;
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+		else
+			return fixThis( macro {
+				var __lazy_lambda__ret = new IntHash();
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.set( $key, __lazy_lambda__x );
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+	}
+
 	/**
 		Tells if the expression "cond" evaluates to true for ALL elements in a collection
 		Exposed variables: $x (element) and $i (element index)
@@ -217,28 +282,28 @@ class LazyLambda {
 
 		if ( exposedIndex )
 			return fixThis( macro {
-				var ret = true;
-				var __lazylambda__i = 0;
-				for ( __lazylambda__x in $it ) {
+				var __lazy_lambda__ret = true;
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
 					if ( !$cond ) {
-						ret = false;
+						__lazy_lambda__ret = false;
 						break;
 					}
-					__lazylambda__i++;
+					__lazy_lambda__i++;
 				}
-				ret;
-			} );
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
 		else
 			return fixThis( macro {
-				var ret = true;
-				for ( __lazylambda__x in $it ) {
+				var __lazy_lambda__ret = true;
+				for ( __lazy_lambda__x in $it.iterator() ) {
 					if ( !$cond ) {
-						ret = false;
+						__lazy_lambda__ret = false;
 						break;
 					}
 				}
-				ret;
-			} );
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
 	}
 
 	/**
@@ -256,28 +321,28 @@ class LazyLambda {
 
 		if ( exposedIndex )
 			return fixThis( macro {
-				var ret = false;
-				var __lazylambda__i = 0;
-				for ( __lazylambda__x in $it ) {
+				var __lazy_lambda__ret = false;
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
 					if ( $cond ) {
-						ret = true;
+						__lazy_lambda__ret = true;
 						break;
 					}
-					__lazylambda__i++;
+					__lazy_lambda__i++;
 				}
-				ret;
-			} );
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
 		else
 			return fixThis( macro {
-				var ret = false;
-				for ( __lazylambda__x in $it ) {
+				var __lazy_lambda__ret = false;
+				for ( __lazy_lambda__x in $it.iterator() ) {
 					if ( $cond ) {
-						ret = true;
+						__lazy_lambda__ret = true;
 						break;
 					}
 				}
-				ret;
-			} );
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
 	}
 
 	/**
@@ -289,17 +354,17 @@ class LazyLambda {
 		cond = inspect.uExpr;
 
 		return fixThis( macro {
-			var __lazylambda__i = 0;
-			var ret = -1;
-			for ( __lazylambda__x in $it ) {
+			var __lazy_lambda__i = 0;
+			var __lazy_lambda__ret = -1;
+			for ( __lazy_lambda__x in $it.iterator() ) {
 				if ( $cond ) {
-					ret = __lazylambda__i;
+					__lazy_lambda__ret = __lazy_lambda__i;
 					break;
 				}
-				__lazylambda__i++;
+				__lazy_lambda__i++;
 			}
-			ret;
-		} );
+			__lazy_lambda__ret;
+		} ).changePos( it.pos );
 	}
 
 	/**
@@ -317,19 +382,19 @@ class LazyLambda {
 
 		if ( exposedIndex )
 			return fixThis( macro {
-				var __lazylambda__i = 0;
-				for ( __lazylambda__x in $it ) {
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
 					$expr;
-					__lazylambda__i++;
+					__lazy_lambda__i++;
 				}
 				null;
-			} );
+			} ).changePos( it.pos );
 		else
 			return fixThis( macro {
-				for ( __lazylambda__x in $it )
+				for ( __lazy_lambda__x in $it.iterator() )
 					$expr;
 				null;
-			} );
+			} ).changePos( it.pos );
 	}
 
 	/**
@@ -339,13 +404,13 @@ class LazyLambda {
 	@:macro public static function lazy<A>( it: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
 		return fixThis( macro {
 			{ iterator: function () return $it };
-		} );
+		} ).changePos( it.pos );
 	}
 
 	/**
 		Creates a list from a collection
 	**/
-	public static function list<A>( it: Iterable<A> ): List<A> {
+	public static inline function list<A>( it: Iterable<A> ): List<A> {
 		return fold( it, { $pre.add( $x ); $pre; }, new List<A>() );
 	}
 
@@ -362,43 +427,31 @@ class LazyLambda {
 				case IINDEX: exposedIndex = true;
 			}
 		var itr = getIterator( it );
-		// trace(
-		// 	buildIterable( macro {
-		// 		var it = $itr;
-		// 		{
-		// 			hasNext: it.hasNext,
-		// 			next: function () {
-		// 				var __lazylambda__x = it.next();
-		// 				return $map;
-		// 			}
-		// 		};
-		// 	} ).toString()
-		// );
 		if ( exposedIndex )
 			return buildIterable( macro {
-				var it = $itr;
-				var __lazylambda__i = 0;
+				var __lazy_lambda__it = $itr;
+				var __lazy_lambda__i = 0;
 				{
-					hasNext: it.hasNext,
+					hasNext: __lazy_lambda__it.hasNext,
 					next: function () {
-						var __lazylambda__x = it.next();
-						var ret = $map;
-						__lazylambda__i++;
-						return ret;
+						var __lazy_lambda__x = __lazy_lambda__it.next();
+						var __lazy_lambda__ret = $map;
+						__lazy_lambda__i++;
+						return __lazy_lambda__ret;
 					}
 				};
-			} );
+			} ).changePos( it.pos );
 		else
 			return buildIterable( macro {
-				var it = $itr;
+				var __lazy_lambda__it = $itr;
 				{
-					hasNext: it.hasNext,
+					hasNext: __lazy_lambda__it.hasNext,
 					next: function () {
-						var __lazylambda__x = it.next();
+						var __lazy_lambda__x = __lazy_lambda__it.next();
 						return $map;
 					}
 				};
-			} );
+			} ).changePos( it.pos );
 	}
 
 #if macro
@@ -414,14 +467,14 @@ class LazyLambda {
 				case EConst( c ):
 					switch ( c ) {
 						case CIdent( s ):
-							if ( s.length>=1 && s.charAt( 0 )=='$' ) {
-								found.remove( s );
-								found.push( s );
-								EConst( CIdent( '__lazylambda__' + s.substr( 1 ) ) ).make();
-							}
-							else {
-								x;
-							}
+							switch ( s ) {
+								case IINDEX, IELEMENT, IPREVALUE:
+									found.remove( s );
+									found.push( s );
+									EConst( CIdent( '__lazy_lambda__' + s.substr( 1 ) ) ).make();
+								default:
+									x;
+							};
 						default: x;
 					};
 				default: x;
@@ -435,6 +488,8 @@ class LazyLambda {
 	}
 
 	static function fixThis( x: Expr ): Expr {
+		trace( x.pos );
+		trace( x.toString() );
 		return ExprTools.transform( x, function ( x ) {
 			return switch ( x.expr ) {
 				case EConst( c ):
@@ -454,8 +509,6 @@ class LazyLambda {
 	}
 
 	static function getIterator<A>( x: ExprOf<Iterable<A>> ): ExprOf<Iterator<A>> {
-		// trace( x.pos );
-		// trace( x.toString() );
 		return ECall( EField( x, 'iterator' ).make(), [] ).make();
 	}
 
