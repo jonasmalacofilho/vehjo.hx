@@ -208,6 +208,64 @@ class LazyLambda {
 				__lazy_lambda__pre;
 			} ).changePos( it.pos );
 	}
+
+	@:macro public static function groupByHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<String> ): ExprOf<Hash<A>> {
+		var inspect = inspectIdentifiers( key );
+		key = inspect.uExpr;
+		var exposedIndex = false;
+		for ( x in inspect.found )
+			switch ( x ) {
+				case IINDEX: exposedIndex = true;
+			}
+
+		if ( exposedIndex )
+			return fixThis( macro {
+				var __lazy_lambda__ret = new jonas.ds.MultiHash();
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.add( $key, __lazy_lambda__x );
+					__lazy_lambda__i++;
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+		else
+			return fixThis( macro {
+				var __lazy_lambda__ret = new jonas.ds.MultiHash();
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.add( $key, __lazy_lambda__x );
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+	}
+
+	@:macro public static function groupByIntHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<Int> ): ExprOf<IntHash<A>> {
+		var inspect = inspectIdentifiers( key );
+		key = inspect.uExpr;
+		var exposedIndex = false;
+		for ( x in inspect.found )
+			switch ( x ) {
+				case IINDEX: exposedIndex = true;
+			}
+
+		if ( exposedIndex )
+			return fixThis( macro {
+				var __lazy_lambda__ret = new jonas.ds.IntMultiHash();
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.add( $key, __lazy_lambda__x );
+					__lazy_lambda__i++;
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+		else
+			return fixThis( macro {
+				var __lazy_lambda__ret = new jonas.ds.IntMultiHash();
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.add( $key, __lazy_lambda__x );
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+	}
 	
 	@:macro public static function hash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<String> ): ExprOf<Hash<A>> {
 		var inspect = inspectIdentifiers( key );
@@ -395,6 +453,14 @@ class LazyLambda {
 					$expr;
 				null;
 			} ).changePos( it.pos );
+	}
+
+	/**
+		Join elements into a String
+	**/
+	public static inline function join<A>( it: Iterable<A>, sep: String ): String {
+		var first = true;
+		return fold( it, if ( first ) { first = false; $pre.add( $x ); $pre; } else { $pre.add( sep ); $pre.add( $x ); $pre; }, new StringBuf() ).toString();
 	}
 
 	/**
