@@ -10,9 +10,6 @@ using jonas.macro.ExprTools;
 	- lazy evaluation: receives and returns iterators, not iterables
 	- receives expressions (more compact), not functions
 
-	Functions that return a single value (and not a collection of values) are just
-	macro equivalents to the ones in the original Lambda class.
-
 	TODO:
 	- first: ExprOf<Iterator<A>> -> ExprOf<A>
 	- pair: ExprOf<Iterator<A>> -> ExprOF<Iterator<B>> -> ExprOf<Iterator<C>>
@@ -32,25 +29,29 @@ class LazyLambda {
 		Concatenates two collections
 	**/
 	@:macro public static function concat<A>( it1: ExprOf<Iterable<A>>, it2: ExprOf<Iterable<A>> ): ExprOf<Iterable<A>> {
-		var itr2 = getIterator( it2 );
-		var itr1 = getIterator( it1 );
-		return buildIterable( macro {
-			var __lazy_lambda__nxit = $itr2;
-			var __lazy_lambda__fsit = $itr1;
-			{
-				hasNext: function () {
-					if ( __lazy_lambda__fsit.hasNext() )
-						return true;
-					else if ( __lazy_lambda__nxit != null ) {
-						__lazy_lambda__fsit = __lazy_lambda__nxit;
-						__lazy_lambda__nxit = null;
-						return __lazy_lambda__fsit.hasNext();
-					}
-					else
-						return false;
-				},
-				next: function () return __lazy_lambda__fsit.next()
-			};
+		return ( macro {
+			var __lazy_lambda__itble1 = $it1;
+			var __lazy_lambda__itble2 = $it2;
+			{ iterator:
+				function () {
+					var __lazy_lambda__nxit = __lazy_lambda__itble2.iterator();
+					var __lazy_lambda__fsit = __lazy_lambda__itble1.iterator();
+					return {
+						hasNext: function () {
+							if ( __lazy_lambda__fsit.hasNext() )
+								return true;
+							else if ( __lazy_lambda__nxit != null ) {
+								__lazy_lambda__fsit = __lazy_lambda__nxit;
+								__lazy_lambda__nxit = null;
+								return __lazy_lambda__fsit.hasNext();
+							}
+							else
+								return false;
+						},
+						next: function () return __lazy_lambda__fsit.next()
+					};
+				}
+			}
 		} ).changePos( it1.pos );
 	}
 
@@ -87,53 +88,63 @@ class LazyLambda {
 			switch ( x ) {
 				case IINDEX: exposedIndex = true;
 			}
-		var itr = getIterator( it );
+
 		if ( exposedIndex )
-			return buildIterable( macro {
-				var __lazy_lambda__it = $itr;
-				var __lazy_lambda__nx = null;
-				var __lazy_lambda__i = 0;
-				{
-					hasNext: function () {
-						while ( __lazy_lambda__nx == null && __lazy_lambda__it.hasNext() ) {
-							var __lazy_lambda__x = __lazy_lambda__it.next();
-							if ( $filter ) {
-								__lazy_lambda__nx = __lazy_lambda__x;
-								__lazy_lambda__i++;
-								return true;
+			return ( macro {
+				var __lazy_lambda__itble = $it;
+				{ iterator:
+					function () {
+						var __lazy_lambda__it = __lazy_lambda__itble.iterator();
+						var __lazy_lambda__nx = null;
+						var __lazy_lambda__i = 0;
+						return {
+							hasNext: function () {
+								while ( __lazy_lambda__nx == null && __lazy_lambda__it.hasNext() ) {
+									var __lazy_lambda__x = __lazy_lambda__it.next();
+									if ( $filter ) {
+										__lazy_lambda__nx = __lazy_lambda__x;
+										__lazy_lambda__i++;
+										return true;
+									}
+									__lazy_lambda__i++;
+								}
+								return __lazy_lambda__nx != null;
+							},
+							next: function () {
+								var next = __lazy_lambda__nx;
+								__lazy_lambda__nx = null;
+								return next;
 							}
-							__lazy_lambda__i++;
-						}
-						return __lazy_lambda__nx != null;
-					},
-					next: function () {
-						var next = __lazy_lambda__nx;
-						__lazy_lambda__nx = null;
-						return next;
+						};
 					}
-				};
+				}
 			} ).changePos( it.pos );
 		else
-			return buildIterable( macro {
-				var __lazy_lambda__it = $itr;
-				var __lazy_lambda__nx = null;
-				{
-					hasNext: function () {
-						while ( __lazy_lambda__nx == null && __lazy_lambda__it.hasNext() ) {
-							var __lazy_lambda__x = __lazy_lambda__it.next();
-							if ( $filter ) {
-								__lazy_lambda__nx = __lazy_lambda__x;
-								return true;
+			return ( macro {
+				var __lazy_lambda__itble = $it;
+				{ iterator:
+					function () {
+						var __lazy_lambda__it = __lazy_lambda__itble.iterator();
+						var __lazy_lambda__nx = null;
+						return {
+							hasNext: function () {
+								while ( __lazy_lambda__nx == null && __lazy_lambda__it.hasNext() ) {
+									var __lazy_lambda__x = __lazy_lambda__it.next();
+									if ( $filter ) {
+										__lazy_lambda__nx = __lazy_lambda__x;
+										return true;
+									}
+								}
+								return __lazy_lambda__nx != null;
+							},
+							next: function () {
+								var next = __lazy_lambda__nx;
+								__lazy_lambda__nx = null;
+								return next;
 							}
-						}
-						return __lazy_lambda__nx != null;
-					},
-					next: function () {
-						var next = __lazy_lambda__nx;
-						__lazy_lambda__nx = null;
-						return next;
+						};
 					}
-				};
+				}
 			} ).changePos( it.pos );
 	}
 
@@ -151,7 +162,7 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__i = 0;
 				var __lazy_lambda__ret = null;
 				for ( __lazy_lambda__x in $it.iterator() ) {
@@ -164,7 +175,7 @@ class LazyLambda {
 				__lazy_lambda__ret;
 			} ).changePos( it.pos );
 		else
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = null;
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					if ( $cond ) {
@@ -190,7 +201,7 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__pre = $first;
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
@@ -200,7 +211,7 @@ class LazyLambda {
 				__lazy_lambda__pre;
 			} ).changePos( it.pos );
 		else
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__pre = $first;
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__pre = $fold;
@@ -209,6 +220,10 @@ class LazyLambda {
 			} ).changePos( it.pos );
 	}
 
+	/**
+		Groups values acording to equal string keys
+		Returns a jonas.ds.MultiHash
+	**/
 	@:macro public static function groupByHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<String> ): ExprOf<Hash<A>> {
 		var inspect = inspectIdentifiers( key );
 		key = inspect.uExpr;
@@ -219,7 +234,7 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = new jonas.ds.MultiHash();
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
@@ -229,7 +244,7 @@ class LazyLambda {
 				__lazy_lambda__ret;
 			} ).changePos( it.pos );
 		else
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = new jonas.ds.MultiHash();
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.add( $key, __lazy_lambda__x );
@@ -238,6 +253,10 @@ class LazyLambda {
 			} ).changePos( it.pos );
 	}
 
+	/**
+		Groups values acording to equal integer keys
+		Returns a jonas.ds.IntMultiHash
+	**/
 	@:macro public static function groupByIntHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<Int> ): ExprOf<IntHash<A>> {
 		var inspect = inspectIdentifiers( key );
 		key = inspect.uExpr;
@@ -248,7 +267,7 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = new jonas.ds.IntMultiHash();
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
@@ -258,7 +277,7 @@ class LazyLambda {
 				__lazy_lambda__ret;
 			} ).changePos( it.pos );
 		else
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = new jonas.ds.IntMultiHash();
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.add( $key, __lazy_lambda__x );
@@ -267,6 +286,9 @@ class LazyLambda {
 			} ).changePos( it.pos );
 	}
 	
+	/**
+		Builds a Hash from values, using expression "key" for keys
+	**/
 	@:macro public static function hash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<String> ): ExprOf<Hash<A>> {
 		var inspect = inspectIdentifiers( key );
 		key = inspect.uExpr;
@@ -277,7 +299,7 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = new Hash();
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
@@ -287,7 +309,7 @@ class LazyLambda {
 				__lazy_lambda__ret;
 			} ).changePos( it.pos );
 		else
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = new Hash();
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.set( $key, __lazy_lambda__x );
@@ -296,6 +318,41 @@ class LazyLambda {
 			} ).changePos( it.pos );
 	}
 
+	/**
+		Builds a Hash from keys, using expression "value" for values
+	**/
+	@:macro public static function hashFromKeys<A>( it: ExprOf<Iterable<String>>, value: ExprOf<A> ): ExprOf<Hash<A>> {
+		var inspect = inspectIdentifiers( value );
+		value = inspect.uExpr;
+		var exposedIndex = false;
+		for ( x in inspect.found )
+			switch ( x ) {
+				case IINDEX: exposedIndex = true;
+			}
+
+		if ( exposedIndex )
+			return ( macro {
+				var __lazy_lambda__ret = new Hash();
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.set( __lazy_lambda__x, $value );
+					__lazy_lambda__i++;
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+		else
+			return ( macro {
+				var __lazy_lambda__ret = new Hash();
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.set( __lazy_lambda__x, $value );
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+	}
+
+	/**
+		Builds an IntHash from values, using expression "key" for keys
+	**/
 	@:macro public static function intHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<Int> ): ExprOf<IntHash<A>> {
 		var inspect = inspectIdentifiers( key );
 		key = inspect.uExpr;
@@ -306,7 +363,7 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = new IntHash();
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
@@ -316,10 +373,42 @@ class LazyLambda {
 				__lazy_lambda__ret;
 			} ).changePos( it.pos );
 		else
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = new IntHash();
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.set( $key, __lazy_lambda__x );
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+	}
+
+	/**
+		Builds an IntHash from keys, using expression "value" for values
+	**/
+	@:macro public static function intHashFromKeys<A>( it: ExprOf<Iterable<Int>>, value: ExprOf<A> ): ExprOf<IntHash<A>> {
+		var inspect = inspectIdentifiers( value );
+		value = inspect.uExpr;
+		var exposedIndex = false;
+		for ( x in inspect.found )
+			switch ( x ) {
+				case IINDEX: exposedIndex = true;
+			}
+
+		if ( exposedIndex )
+			return ( macro {
+				var __lazy_lambda__ret = new IntHash();
+				var __lazy_lambda__i = 0;
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.set( __lazy_lambda__x, $value );
+					__lazy_lambda__i++;
+				}
+				__lazy_lambda__ret;
+			} ).changePos( it.pos );
+		else
+			return ( macro {
+				var __lazy_lambda__ret = new IntHash();
+				for ( __lazy_lambda__x in $it.iterator() ) {
+					__lazy_lambda__ret.set( __lazy_lambda__x, $value );
 				}
 				__lazy_lambda__ret;
 			} ).changePos( it.pos );
@@ -339,7 +428,7 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = true;
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
@@ -352,7 +441,7 @@ class LazyLambda {
 				__lazy_lambda__ret;
 			} ).changePos( it.pos );
 		else
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = true;
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					if ( !$cond ) {
@@ -378,7 +467,7 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = false;
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
@@ -391,7 +480,7 @@ class LazyLambda {
 				__lazy_lambda__ret;
 			} ).changePos( it.pos );
 		else
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__ret = false;
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					if ( $cond ) {
@@ -411,7 +500,7 @@ class LazyLambda {
 		var inspect = inspectIdentifiers( cond );
 		cond = inspect.uExpr;
 
-		return fixThis( macro {
+		return ( macro {
 			var __lazy_lambda__i = 0;
 			var __lazy_lambda__ret = -1;
 			for ( __lazy_lambda__x in $it.iterator() ) {
@@ -439,7 +528,7 @@ class LazyLambda {
 			}
 
 		if ( exposedIndex )
-			return fixThis( macro {
+			return ( macro {
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					$expr;
@@ -448,7 +537,7 @@ class LazyLambda {
 				null;
 			} ).changePos( it.pos );
 		else
-			return fixThis( macro {
+			return ( macro {
 				for ( __lazy_lambda__x in $it.iterator() )
 					$expr;
 				null;
@@ -468,8 +557,9 @@ class LazyLambda {
 		Behare of side-effects on the expression "it"
 	**/
 	@:macro public static function lazy<A>( it: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
-		return fixThis( macro {
-			{ iterator: function () return $it };
+		return ( macro {
+			var __lazy_lambda__itble = $it;
+			{ iterator: function () return __lazy_lambda__itble };
 		} ).changePos( it.pos );
 	}
 
@@ -492,31 +582,40 @@ class LazyLambda {
 			switch ( x ) {
 				case IINDEX: exposedIndex = true;
 			}
-		var itr = getIterator( it );
 		if ( exposedIndex )
-			return buildIterable( macro {
-				var __lazy_lambda__it = $itr;
-				var __lazy_lambda__i = 0;
-				{
-					hasNext: __lazy_lambda__it.hasNext,
-					next: function () {
-						var __lazy_lambda__x = __lazy_lambda__it.next();
-						var __lazy_lambda__ret = $map;
-						__lazy_lambda__i++;
-						return __lazy_lambda__ret;
+			return ( macro {
+				var __lazy_lambda__itble = $it;
+				{ iterator:
+					function () {
+						var __lazy_lambda__it = __lazy_lambda__itble.iterator();
+						var __lazy_lambda__i = 0;
+						return {
+							hasNext: __lazy_lambda__it.hasNext,
+							next: function () {
+								var __lazy_lambda__x = __lazy_lambda__it.next();
+								var __lazy_lambda__ret = $map;
+								__lazy_lambda__i++;
+								return __lazy_lambda__ret;
+							}
+						};
 					}
-				};
+				}
 			} ).changePos( it.pos );
 		else
-			return buildIterable( macro {
-				var __lazy_lambda__it = $itr;
-				{
-					hasNext: __lazy_lambda__it.hasNext,
-					next: function () {
-						var __lazy_lambda__x = __lazy_lambda__it.next();
-						return $map;
+			return ( macro {
+				var __lazy_lambda__itble = $it;
+				{ iterator:
+					function () {
+						var __lazy_lambda__it = __lazy_lambda__itble.iterator();
+						return {
+							hasNext: __lazy_lambda__it.hasNext,
+							next: function () {
+								var __lazy_lambda__x = __lazy_lambda__it.next();
+								return $map;
+							}
+						};
 					}
-				};
+				}
 			} ).changePos( it.pos );
 	}
 
@@ -547,35 +646,6 @@ class LazyLambda {
 			};
 		} );
 		return { uExpr: uExpr, found: found };
-	}
-
-	static function buildIterable<A>( x: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
-		return fixThis( macro { iterator: function () return $x } );
-	}
-
-	static function fixThis( x: Expr ): Expr {
-		trace( x.pos );
-		trace( x.toString() );
-		return ExprTools.transform( x, function ( x ) {
-			return switch ( x.expr ) {
-				case EConst( c ):
-					switch ( c ) {
-						case CIdent( s ):
-							if ( s=='`' ) {
-								EConst( CIdent( 'this' ) ).make();
-							}
-							else {
-								x;
-							}
-						default: x;
-					};
-				default: x;
-			};
-		} );
-	}
-
-	static function getIterator<A>( x: ExprOf<Iterable<A>> ): ExprOf<Iterator<A>> {
-		return ECall( EField( x, 'iterator' ).make(), [] ).make();
 	}
 
 #end
