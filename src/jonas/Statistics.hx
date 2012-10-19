@@ -9,7 +9,7 @@ using jonas.LazyLambda;
 class Statistics {
 	
 	public static function hist( i: Iterable<Float>, ?noBins=10, ?min: Null<Float>, ?max: Null<Float> )
-	: { width: Float, lowerNames: Array<Float>, values: Array<Int> } {
+	: Histogram {
 		
 		var _min = Math.POSITIVE_INFINITY;
 		var _max = Math.NEGATIVE_INFINITY;
@@ -29,7 +29,7 @@ class Statistics {
 
 		var dx = ( _max - _min ) / ( noBins - 1 );
 		var bins = ( 0...noBins ).lazy().map( 0 ).array();
-		var lowerNames = bins.map( _min + dx * $x ).array();
+		var lowerNames = bins.map( _min + dx * $i ).array();
 
 		for ( x in i )
 			if ( x >= _min && x <= _max )
@@ -38,4 +38,10 @@ class Statistics {
 		return { width: dx, lowerNames: lowerNames, values: bins };
 	}
 
+	public static function printHistogram( h: Histogram, ?sep='' ): String {
+		return h.lowerNames.map( [ $x, $x + h.width, h.values[$i] ].join( sep ) ).join( '\n' );
+	}
+
 }
+
+typedef Histogram = { width: Float, lowerNames: Array<Float>, values: Array<Int> };

@@ -558,8 +558,7 @@ class LazyLambda {
 	**/
 	@:macro public static function lazy<A>( it: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
 		return ( macro {
-			var __lazy_lambda__itble = $it;
-			{ iterator: function () return __lazy_lambda__itble };
+			{ iterator: function () return $it };
 		} ).changePos( it.pos );
 	}
 
