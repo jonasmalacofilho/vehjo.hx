@@ -73,6 +73,10 @@ class Vector {
 	public inline function scale( f : Float ) : Vector {
 		return new Vector( x * f , y * f );
 	}
+
+	public inline function proj( x: Vector ): Vector {
+		return x.scale( dotProduct( x )/x.mod() );
+	}
 	
 	public function toString() : String {
 		return '(' + x + ', ' + y + ')';
