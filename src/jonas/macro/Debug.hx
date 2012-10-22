@@ -30,7 +30,7 @@ class Debug {
 	/* Traces v if cond==true */
 	@:macro public static function assertIf( cond : ExprOf<Bool>, v : Expr ) {
 		#if debug
-		var str = Context.makeExpr( 'Assert "' + v.toString() + '": ', v.pos );
+		var str = Context.makeExpr( '"' + cond.toString() + '"==true triggered assert "' + v.toString() + '": ', v.pos );
 		return ExprTools.make( EIf( cond, ExprTools.trce( ExprTools.make( EBinop( OpAdd, str, v ) ) ), null ) );
 		#else
 		return ExprTools.makeEmpty();
