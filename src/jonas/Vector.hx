@@ -75,7 +75,9 @@ class Vector {
 	}
 
 	public inline function proj( x: Vector ): Vector {
-		return x.scale( dotProduct( x )/x.mod() );
+		// |y| = dotProduct( x )/x.mod()
+		//  y  = x.scale( |y|/|x| )
+		return x.scale( dotProduct( x )/x.mod()/x.mod() );
 	}
 	
 	public function toString() : String {
