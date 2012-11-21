@@ -23,6 +23,8 @@ package jonas;
  * SOFTWARE.
  */
 
+typedef Vector2 = Vector;
+
 /**
  * Vector (2D)
  */
