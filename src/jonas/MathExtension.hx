@@ -65,7 +65,7 @@ class MathExtension
 	 */
 	inline static public function earth_radius(lat : Float) : Float
 	{
-		return (6378.137 - 21. * Math.sin(lat)) * 1000.;
+		return (6378.137 - 21.*Math.sin( Math.abs( lat ) ) )*1000.;
 	}
 	
 	/**
