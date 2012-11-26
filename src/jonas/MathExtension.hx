@@ -3,29 +3,9 @@ package jonas;
 /*
  * Math aditional functions
  * Copyright (c) 2012 Jonas Malaco Filho
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Licensed under the MIT License. Check LICENSE.txt for more information.
  */
 
-/**
- * Complement to Math
- */
 class MathExtension 
 {
 	
@@ -60,12 +40,11 @@ class MathExtension
 	
 	/**
 	 * Returns the earth radius estimate in meters, based on a given
-	 * latitude in degrees
+	 * latitude in radians
 	 * Based on: http://www.faqs.org/faqs/geography/infosystems-faq/
 	 */
-	inline static public function earth_radius(lat : Float) : Float
-	{
-		return (6378.137 - 21.*Math.sin( Math.abs( lat ) ) )*1000.;
+	inline static public function earth_radius( lat: Float ): Float {
+		return ( 6378.137 - 21.*Math.sin( Math.abs( lat ) ) )*1000.;
 	}
 	
 	/**
