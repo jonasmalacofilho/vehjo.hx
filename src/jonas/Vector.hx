@@ -28,6 +28,10 @@ class Vector {
 	public inline function dotProduct( v : Vector ) : Float {
 		return x * v.x + y * v.y;
 	}
+
+	public inline function crossProduct( b: Vector ): Float {
+		return x*b.y - b.x*y;
+	}
 	
 	public inline function rev() : Vector {
 		return new Vector( -x, -y );
