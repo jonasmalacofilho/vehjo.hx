@@ -45,4 +45,8 @@ class Writer {
 		return out.getBytes().toString();
 	}
 
+	public function close(): Void {
+		o.close();
+	}
+
 }

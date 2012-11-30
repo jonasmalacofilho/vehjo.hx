@@ -135,4 +135,8 @@ class Reader {
 		return fs;
 	}
 
+	public function close(): Void {
+		i.close();
+	}
+
 }
