@@ -1,6 +1,5 @@
 -cp src
 -lib jonas-haxe
--lib tink_macros
 -debug
 -main Tests
 -neko bin/neko/Tests.n
@@ -9,7 +8,6 @@
 
 -cp src
 -lib jonas-haxe
--lib tink_macros
 -debug
 -main Tests
 -cpp bin/cpp

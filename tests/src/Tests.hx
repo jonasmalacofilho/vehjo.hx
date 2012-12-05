@@ -26,6 +26,7 @@ class Tests {
 	static function run_all_tests() {
 		var t = new jonas.unit.TestRunner();
 		//t.customTrace = function( v, ?p ) { };
+		t.add( new jonas.TestGeneric() );
 		jonas.Base16Tests.add_tests( t );
 		jonas.Base64TestSuite.add_tests( t );
 		jonas.HMACTestSuite.add_tests( t ); // js: not suported for there is no Bytes implementation for Md5 or SHA-1 in the std

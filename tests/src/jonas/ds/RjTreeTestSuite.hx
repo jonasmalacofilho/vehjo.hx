@@ -194,6 +194,20 @@ class RjTreeComprehensiveTest extends TestCase {
 	
 	@description( 'small random model' )
 	public function testSmallRandom() {
+		var times = runTestRandom( 100 );
+		if ( _config_current != _config_default )
+			trace(
+				_config_current + ':' + NumberPrinter.printInteger( 100, 7 ) + ': ' +
+				NumberPrinter.printDecimal( times.get( 'insertion' ), 6, 4 ) + ' ' +
+				NumberPrinter.printDecimal( times.get( 'iteration' ), 6, 4 ) + ' ' +
+				NumberPrinter.printDecimal( times.get( 'searching(1%)' ), 6, 4 ) + ' ' +
+				NumberPrinter.printDecimal( times.get( 'searching(10%)' ), 6, 4 ) + ' ' +
+				NumberPrinter.printDecimal( times.get( 'searching(50%)' ), 6, 4 )
+			);
+	}
+	
+	@description( 'medium random model' )
+	public function testMediumRandom() {
 		var times = runTestRandom( 1000 );
 		if ( _config_current != _config_default )
 			trace(
@@ -206,26 +220,12 @@ class RjTreeComprehensiveTest extends TestCase {
 			);
 	}
 	
-	@description( 'medium random model' )
-	public function testMediumRandom() {
+	@description( 'large random model' )
+	public function testLargeRandom() {
 		var times = runTestRandom( 10000 );
 		if ( _config_current != _config_default )
 			trace(
 				_config_current + ':' + NumberPrinter.printInteger( 10000, 7 ) + ': ' +
-				NumberPrinter.printDecimal( times.get( 'insertion' ), 6, 4 ) + ' ' +
-				NumberPrinter.printDecimal( times.get( 'iteration' ), 6, 4 ) + ' ' +
-				NumberPrinter.printDecimal( times.get( 'searching(1%)' ), 6, 4 ) + ' ' +
-				NumberPrinter.printDecimal( times.get( 'searching(10%)' ), 6, 4 ) + ' ' +
-				NumberPrinter.printDecimal( times.get( 'searching(50%)' ), 6, 4 )
-			);
-	}
-	
-	@description( 'large random model' )
-	public function testLargeRandom() {
-		var times = runTestRandom( 100000 );
-		if ( _config_current != _config_default )
-			trace(
-				_config_current + ':' + NumberPrinter.printInteger( 100000, 7 ) + ': ' +
 				NumberPrinter.printDecimal( times.get( 'insertion' ), 6, 4 ) + ' ' +
 				NumberPrinter.printDecimal( times.get( 'iteration' ), 6, 4 ) + ' ' +
 				NumberPrinter.printDecimal( times.get( 'searching(1%)' ), 6, 4 ) + ' ' +

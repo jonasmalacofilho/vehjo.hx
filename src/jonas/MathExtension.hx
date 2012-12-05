@@ -40,11 +40,11 @@ class MathExtension
 	
 	/**
 	 * Returns the earth radius estimate in meters, based on a given
-	 * latitude in radians
+	 * latitude in degrees
 	 * Based on: http://www.faqs.org/faqs/geography/infosystems-faq/
 	 */
 	inline static public function earth_radius( lat: Float ): Float {
-		return ( 6378.137 - 21.*Math.sin( Math.abs( lat ) ) )*1000.;
+		return ( 6378.137 - 21.*Math.abs( Math.sin( to_radians( lat ) ) ) )*1000.;
 	}
 	
 	/**
@@ -60,7 +60,7 @@ class MathExtension
 		var dlon = to_radians(lon2 - lon1);
 		var arc = Math.sin(dlat * .5) * Math.sin(dlat * .5) 
 				+ Math.sin(dlon * .5) * Math.sin(dlon * .5) * Math.cos(to_radians(lat1)) * Math.cos(to_radians(lat2));
-		return earth_radius(to_radians((lat1 + lat2) * .5)) * 2. * Math.atan2(Math.sqrt(arc), Math.sqrt(1 - arc));
+		return earth_radius((lat1 + lat2) * .5) * 2. * Math.atan2(Math.sqrt(arc), Math.sqrt(1 - arc));
 	}
 	
 	/**
