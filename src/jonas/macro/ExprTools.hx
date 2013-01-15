@@ -65,7 +65,7 @@ class ExprTools {
 			case EWhile( econd, e, normalWhile ): EWhile( transform( econd, t ), transform( e, t ), normalWhile );
 			case ESwitch( e, cases, edef ): ESwitch(
 				transform( e, t ),
-				Lam.map( cases, function ( x ) return {
+				Lam.map( cases, function ( x ) return cast {
 					values: Lam.map( x.values, function ( x ) return transform( x, t ) ),
 					expr: transform( x.expr, t )
 				} ),

@@ -104,10 +104,10 @@ class Printer {
 				constraints.push(printType(indent, c));//haXe doesn't actually support constraints as of yet, but the syntax exists
 			var ret = p.name;
 			ret +=
-				switch (constraints.length) {
-					case 0: '';
+				switch ( constraints.length ) {
 					case 1: ':' + constraints[0];
 					case 2: ':(' + constraints.join(', ') + ')';
+					case _: '';
 				}
 			params.push(ret);
 		}
@@ -244,6 +244,8 @@ class Printer {
 						printList(ret, '{}'.split(''));
 					case EFunction(name, f): 
 						printFunction(f, name, indent);
+					case _:
+						'#UNKNOWN';
 			}
 	}		
 }

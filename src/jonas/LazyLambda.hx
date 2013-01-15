@@ -620,28 +620,24 @@ class LazyLambda {
 
 #if macro
 
-	static inline var IINDEX = '$i';
-	static inline var IELEMENT = '$x';
-	static inline var IPREVALUE = '$pre';
+	static inline var IINDEX = '$$i';
+	static inline var IELEMENT = '$$x';
+	static inline var IPREVALUE = '$$pre';
 
 	static function inspectIdentifiers( expr: Expr ): { uExpr: Expr, found: Array<String> } {
 		var found = [];
 		var uExpr = expr.transform( function ( x ) {
 			return switch ( x.expr ) {
-				case EConst( c ):
-					switch ( c ) {
-						case CIdent( s ):
-							switch ( s ) {
-								case IINDEX, IELEMENT, IPREVALUE:
-									found.remove( s );
-									found.push( s );
-									EConst( CIdent( '__lazy_lambda__' + s.substr( 1 ) ) ).make();
-								default:
-									x;
-							};
-						default: x;
+				case EConst( CIdent( s ) ):
+					switch ( s ) {
+						case IINDEX, IELEMENT, IPREVALUE:
+							found.remove( s );
+							found.push( s );
+							EConst( CIdent( '__lazy_lambda__' + s.substr( 1 ) ) ).make();
+						case _:
+							x;
 					};
-				default: x;
+				case _: x;
 			};
 		} );
 		return { uExpr: uExpr, found: found };

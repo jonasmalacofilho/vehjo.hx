@@ -68,19 +68,8 @@ class Reader {
 		while ( true ) {
 			try {
 				c = i.readByte();
-			}
-			catch( e : haxe.io.Eof ) {
-				var cf = f.getBytes();
-				if ( cf.length==0 )
-					throw new haxe.io.Eof();
-				else
-					fs.push( cf.toString() );
-				break;
-			}
-			// Debug.assert( [ qtd, last, beforeLast, c, String.fromCharCode( c ) ] );
-			// Debug.assertTrue( c!=qte );
-			switch ( c ) {
-				case sep : // field separator
+				if ( c == sep ) { // field separator
+
 					if ( last==nl0 )
 						f.addByte( last );
 					if ( qtd && last!=qte )
@@ -91,7 +80,10 @@ class Reader {
 						c = -1;
 						qtd = false;
 					}
-				case qte : // quote
+
+				}
+				else if ( c == qte ) { // quote
+
 					if ( last==nl0 )
 						f.addByte( last );
 					if ( qtd && last==qte ) {
@@ -104,14 +96,18 @@ class Reader {
 						qtd = true;
 						c = sep;
 					}
-				case nl0 : // newline separator (first byte)
-					if ( ( !qtd || last==qte ) && nl1==-1 ) {
-						fs.push( f.getBytes().toString() );
-						c = -1;
-						qtd = false;
-						break;
-					}
-				case nl1 : // newline separator (second byte)
+
+				}
+				else if ( c == nl0 && ( !qtd || last==qte ) && nl1==-1 ) { // newline separator (first byte)
+					
+					fs.push( f.getBytes().toString() );
+					c = -1;
+					qtd = false;
+					break;
+
+				}
+				else if ( c == nl1 ) { // newline separator (second byte)
+
 					if ( ( !qtd || beforeLast==qte ) && last==nl0 ) {
 						fs.push( f.getBytes().toString() );
 						c = -1;
@@ -123,11 +119,26 @@ class Reader {
 							f.addByte( last );
 						f.addByte( c );
 					}
-				default : // everything else
+
+				}
+				else { // everything else
+
 					if ( last==nl0 )
 						f.addByte( last );
 					f.addByte( c );
+					
+				}
 			}
+			catch( e : haxe.io.Eof ) {
+				var cf = f.getBytes();
+				if ( cf.length==0 )
+					throw new haxe.io.Eof();
+				else
+					fs.push( cf.toString() );
+				break;
+			}
+			// Debug.assert( [ qtd, last, beforeLast, c, String.fromCharCode( c ) ] );
+			// Debug.assertTrue( c!=qte );
 			beforeLast = last;
 			last = c;
 			// Debug.assert( fs );
