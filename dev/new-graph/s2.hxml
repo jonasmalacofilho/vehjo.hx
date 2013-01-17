@@ -1,0 +1,3 @@
+-neko bin/s2.n
+-main S2
+-cp src

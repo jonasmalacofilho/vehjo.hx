@@ -1,6 +1,9 @@
-src
 dev
+dev/new-graph
+dev/new-graph/bin
+src
 tests
+tests/bin
 tests/bin/cpp
 tests/bin/js
 tests/bin/neko

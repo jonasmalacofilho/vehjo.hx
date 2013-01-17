@@ -97,5 +97,6 @@ class S1 {
 		w.adjHead = a2;
 		// a extended digraph
 		var x = new ExtDigraph();
+		trace( untyped [ v, w, a1, a2, x ] );
 	}
 }
