@@ -98,6 +98,8 @@ class S0 {
 		w.adjHead = a2;
 		// a extended digraph
 		var x = new ExtDigraph();
-		trace( untyped [ v, w, a1, a2, x ] );
+		trace( [ v, w ].join( '\n' ) );
+		trace( [ a1, a2 ].join( '\n' ) );
+		trace( x );
 	}
 }

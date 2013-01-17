@@ -184,6 +184,8 @@ class S3 {
 		w.adjHead = a2;
 		// a second generation extended digraph
 		var x = new Ext2Digraph();
-		trace( untyped [ v, w, a1, a2, x ] );
+		trace( [ v, w ].join( '\n' ) );
+		trace( [ a1, a2 ].join( '\n' ) );
+		trace( x );
 	}
 }
