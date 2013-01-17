@@ -40,6 +40,20 @@ class Digraph<V: Vertex<V,A>, A: Arc<V,A>> {
 	public function new() {
 		vs = [];
 	}
+
+	// add vertex
+	public function addVertex( v: V ): V {
+		vs.push( v );
+		return v;
+	}
+
+	// add arc
+	public function addArc( v: V, w: V, a: A ): A {
+		a.adjNext = v.adjHead;
+		v.adjHead = a;
+		a.w = w;
+		return a;
+	}
 }
 
 
@@ -160,8 +174,7 @@ class MyArc
 	public var adjNext: MyArc;
 	public var cost: Float;
 	public var time: Float;
-	public function new( w, cost, time ) {
-		this.w = w;
+	public function new( cost, time ) {
 		this.cost = cost;
 		this.time = time;
 	}
@@ -169,21 +182,19 @@ class MyArc
 
 class S3 {
 	static function main() {
-		// just try to construct all relevant elements
-		// a node
-		var v = new MyVertex( Math.random(), Math.random() );
-		// another node
-		var w = new MyVertex( Math.random(), Math.random() );
-		// an arc
-		var a1 = new MyArc( w, Math.random(), Math.random() );
-		// register it on its origin vertex
-		v.adjHead = a1;
-		// another arc
-		var a2 = new MyArc( v, Math.random(), Math.random() );
-		// register it on its origin vertex
-		w.adjHead = a2;
 		// a second generation extended digraph
 		var x = new Ext2Digraph();
+
+		// just try to construct all relevant elements
+		// a node
+		var v = x.addVertex( new MyVertex( Math.random(), Math.random() ) );
+		// another node
+		var w = x.addVertex( new MyVertex( Math.random(), Math.random() ) );
+		// an arc
+		var a1 = x.addArc( v, w, new MyArc( Math.random(), Math.random() ) );
+		// another arc
+		var a2 = x.addArc( w, v, new MyArc( Math.random(), Math.random() ) );
+
 		trace( [ v, w ].join( '\n' ) );
 		trace( [ a1, a2 ].join( '\n' ) );
 		trace( x );
