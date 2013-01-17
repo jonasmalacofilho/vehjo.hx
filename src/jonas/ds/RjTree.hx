@@ -19,7 +19,7 @@ import jonas.Vector;
  * Copyright (c) 2012 Jonas Malaco Filho
  * Licensed under the MIT license. Check LICENSE.txt for more information.
  */
-class RjTree<T> {
+class RjTree<T> implements RTree<T> {
 	
 	
 	// --- (sub) tree information and entries

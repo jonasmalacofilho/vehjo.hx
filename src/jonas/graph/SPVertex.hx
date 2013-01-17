@@ -25,5 +25,5 @@ package jonas.graph;
 
 class SPVertex extends PathExistanceVertex {
 	public var cost : Float;
-	override public function toString() : String { return super.toString() + '(parent=' + ( null != parent ? parent.vi : null ) + ', cost=' + cost + ')'; }
+	override public function toString() : String { return Std.format( '$vi(parent=${( null != parent ? parent.vi : null )}, cost=$cost})' ); }
 }

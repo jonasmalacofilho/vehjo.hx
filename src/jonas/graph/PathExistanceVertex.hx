@@ -25,5 +25,5 @@ package jonas.graph;
 
 class PathExistanceVertex extends Vertex {
 	public var parent : PathExistanceVertex;
-	override public function toString() : String { return super.toString() + '(parent=' + ( null != parent ? parent.vi : null ) + ')'; }
+	override public function toString() : String { return Std.format( '$vi(parent=${( null != parent ? parent.vi : null )})' ); }
 }

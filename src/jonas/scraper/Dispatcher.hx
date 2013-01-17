@@ -19,6 +19,7 @@ class Dispatcher {
 	var nJobs : Int;
 	var jobsReceived : Deque<Msg>;
 	var nJobsReceived : Int;
+	public var started( default, null ) : Float;
 	public var completed( default, null ) : Hash<Scraper>;
 	
 	public function new() {
@@ -42,9 +43,9 @@ class Dispatcher {
 	}
 	
 	public function run( nThreads : Int ) : Float {
-		var started = Timer.stamp();
+		started = Timer.stamp();
 		var tracer = haxe.Log.trace;
-		haxe.Log.trace = callback( customTrace, started );
+		haxe.Log.trace = customTrace;
 		
 		// creating threads
 		var threads = new IntHash();
@@ -90,8 +91,8 @@ class Dispatcher {
 		return Timer.stamp() - started;
 	}
 	
-	public dynamic function customTrace( begin : Float, v, ?p : PosInfos ) {
-		Lib.println( NumberPrinter.printDecimal( Timer.stamp() - begin, 5, 3 ) + 's: ' + v + ' (' + p.fileName + ':' + p.lineNumber + ')' );
+	public dynamic function customTrace( v : Dynamic, ?p : PosInfos ) {
+		Lib.println( NumberPrinter.printDecimal( Timer.stamp() - started, 5, 3 ) + 's: ' + v + ' (' + p.fileName + ':' + p.lineNumber + ')' );
 	}
 	
 	static function threadMain() : Void {

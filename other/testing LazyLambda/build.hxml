@@ -1,0 +1,11 @@
+-main Main
+-debug
+-lib jonas-haxe
+-neko main.n
+
+--next
+
+-main BenchmarkLambda
+-debug
+-lib jonas-haxe
+-neko bench.n

@@ -112,5 +112,21 @@ class TestCase extends haxe.unit.TestCase {
 			throw currentTest;
 		}
 	}
+
+	function assertTolerable( exp: Float, val: Float, maxError: Float
+		, ?c : PosInfos ) {
+		currentTest.done = true;
+		var error = ( val - exp ) / exp;
+		if ( Math.abs( error ) > maxError ) {
+			currentTest.success = false;
+			currentTest.error = 'value ' + val
+				+ ' outside of allowed tolerance of ' + ( maxError*100 )
+				+ '% from expected value ' + exp
+				+ ' (config=\'' + _config_current + '\')';
+			currentTest.posInfos = c;
+			throw currentTest;
+		}
+	}
+
 	
 }

@@ -34,7 +34,7 @@ class TestRunner extends haxe.unit.TestRunner {
 	}
 
 	public dynamic function print( v : Dynamic ) : Void {
-		return haxe.unit.TestRunner.print( v );
+		haxe.unit.TestRunner.print( v );
 	}
 	
 	public dynamic function customTrace( v, ?p : haxe.PosInfos ) : Void {
@@ -42,7 +42,7 @@ class TestRunner extends haxe.unit.TestRunner {
 	}
 	
 	public dynamic function println( v : Dynamic ) : Void {
-		return print( v + '\n' );
+		print( v + '\n' );
 	}
 	
 	override function runCase( t:TestCase ) : Void {
