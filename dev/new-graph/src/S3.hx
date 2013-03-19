@@ -63,7 +63,7 @@ class Digraph<V: Vertex<V,A>, A: Arc<V,A>> {
 // extended Vertex interface
 // adds a cost:Float property to Vertex
 interface ExtVertex<V, A, C: Float>
-	implements Vertex<V, A>
+	extends Vertex<V, A>
 {
 	public var adjHead: A;
 	public var cost: C;
@@ -72,7 +72,7 @@ interface ExtVertex<V, A, C: Float>
 // extended Arc interface
 // adds a cost:Float property to Arc
 interface ExtArc<V, A, C: Float>
-	implements Arc<V, A>
+	extends Arc<V, A>
 {
 	public var w: V;
 	public var adjNext: A;
@@ -109,7 +109,7 @@ class ExtDigraph<V: ExtVertex<V, A, C>, A: ExtArc<V, A, C>, C: Float>
 // another extended Vertex interface
 // adds a cost:Float property to Vertex
 interface Ext2Vertex<V, A, C: Float, T: Float>
-	implements ExtVertex<V, A, C>
+	extends ExtVertex<V, A, C>
 {
 	public var adjHead: A;
 	public var cost: C;
@@ -119,7 +119,7 @@ interface Ext2Vertex<V, A, C: Float, T: Float>
 // another extended Arc interface
 // adds a cost:Float property to Arc
 interface Ext2Arc<V, A, C: Float, T: Float>
-	implements ExtArc<V, A, C>
+	extends ExtArc<V, A, C>
 {
 	public var w: V;
 	public var adjNext: A;
