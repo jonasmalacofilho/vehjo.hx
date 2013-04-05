@@ -2,37 +2,15 @@ package jonas.graph;
 
 import jonas.unit.TestCase;
 
-/*
- * Test case that aims towards 100% branch coverage testing of the digraph structure
- * 
- * Since part of the strucure is public (and not that well documented), a proper test suite
- * is necessary to ensure that no invalid states are reached and that the main querying methods
- * are correct
- * 
- * This may be used as a standard for future implementations
- * 
- * This is part of jonas.graph test suite
- * Copyright (c) 2012 Jonas Malaco Filho
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+/**
+	Test case that aims towards 100% branch coverage testing of the digraph structure
+	
+	Since part of the strucure is public (and not that well documented), a proper test suite
+	is necessary to ensure that no invalid states are reached and that the main querying methods
+	are correct
+	
+	This may be used as a standard for future implementations
+**/
 @about( 'Test case that aims towards 100% branch coverage testing of the digraph structure' )
 class DigraphStructuralTest<D : Digraph<V, A>, V : Vertex, A : Arc> extends TestCase {
 	
@@ -430,14 +408,14 @@ class DigraphStructuralTest<D : Digraph<V, A>, V : Vertex, A : Arc> extends Test
 	
 	public function test_arcs_from_empty() : Void {
 		var v = d.add_vertex( vertex() );
-		var as = Lambda.map( { iterator : callback( d.arcs_from, v ) }, function( a ) { return a.w.vi; } );
+		var as = Lambda.map( { iterator: d.arcs_from.bind( v ) }, function( a ) return a.w.vi );
 		assertEquals( new List().toString(), as.toString() );
 	}
 	
 	public function test_arcs_from_single() : Void {
 		var v = d.add_vertex( vertex() );
 		var ref = [ d.add_arc( v, d.add_vertex( vertex() ), arc() ) ];
-		var as = Lambda.map( { iterator : callback( d.arcs_from, v ) }, function( a ) { return a.w.vi; } );
+		var as = Lambda.map( { iterator: d.arcs_from.bind( v ) }, function( a ) return a.w.vi );
 		assertEquals( Lambda.map( ref, function( a ) { return a.w.vi; } ).toString(), as.toString() );
 	}
 	
@@ -446,7 +424,7 @@ class DigraphStructuralTest<D : Digraph<V, A>, V : Vertex, A : Arc> extends Test
 		var ref = [];
 		for ( i in 0...1000 )
 			ref.push( d.add_arc( v, d.add_vertex( vertex() ), arc() ) );
-		var as = Lambda.map( { iterator : callback( d.arcs_from, v ) }, function( a ) { return a.w.vi; } );
+		var as = Lambda.map( { iterator: d.arcs_from.bind( v ) }, function( a ) return a.w.vi );
 		assertEquals( Lambda.map( ref, function( a ) { return a.w.vi; } ).toString(), as.toString() );
 	}
 	
@@ -456,14 +434,14 @@ class DigraphStructuralTest<D : Digraph<V, A>, V : Vertex, A : Arc> extends Test
 	
 	public function test_arcs_from_random_empty() : Void {
 		var v = d.add_vertex( vertex() );
-		var as = Lambda.array( Lambda.map( { iterator : callback( d.arcs_from_random, v ) }, function( a ) { return a.w.vi; } ) );
+		var as = Lambda.array( Lambda.map( { iterator: d.arcs_from_random.bind( v ) }, function ( a ) return a.w.vi ) );
 		assertEquals( [].toString(), as.toString() );
 	}
 	
 	public function test_arcs_from_random_single() : Void {
 		var v = d.add_vertex( vertex() );
 		var ref = [ d.add_arc( v, d.add_vertex( vertex() ), arc() ).w.vi ];
-		var as = Lambda.array( Lambda.map( { iterator : callback( d.arcs_from_random, v ) }, function( a ) { return a.w.vi; } ) );
+		var as = Lambda.array( Lambda.map( { iterator: d.arcs_from_random.bind( v ) }, function ( a ) return a.w.vi ) );
 		as.sort( Reflect.compare );
 		assertEquals( ref.toString(), as.toString() );
 	}
@@ -473,7 +451,7 @@ class DigraphStructuralTest<D : Digraph<V, A>, V : Vertex, A : Arc> extends Test
 		var ref = [];
 		for ( i in 0...1000 )
 			ref.push( d.add_arc( v, d.add_vertex( vertex() ), arc() ).w.vi );
-		var as = Lambda.array( Lambda.map( { iterator : callback( d.arcs_from_random, v ) }, function( a ) { return a.w.vi; } ) );
+		var as = Lambda.array( Lambda.map( { iterator: d.arcs_from_random.bind( v ) }, function ( a ) return a.w.vi ) );
 		var bs = as.copy();
 		as.sort( Reflect.compare );
 		assertEquals( ref.toString(), as.toString() );

@@ -11,18 +11,13 @@ import jonas.ds.RjTree;
 import jonas.Vector;
 using jonas.sort.Heapsort;
 
-/*
- * RjTree test suite
- * Please fell free to add more comprehensive tests
- * Copyright (c) 2012 Jonas Malaco Filho
- * Licensed under the MIT license. Check LICENSE.txt for more information.
- */
-
+/**
+	RjTree test suite
+**/
 class RjTreeTestSuite {
 	
 	public static function add_tests( t : jonas.unit.TestRunner ) {
 		t.add( new RjTreeComprehensiveTest() );
-		//t.add( new RjTreeTest() );
 	}
 	
 	static function main() {
@@ -128,19 +123,19 @@ class RjTreeComprehensiveTest extends TestCase {
 	
 	@description( 'basic search test with up to 2 points' )
 	public function testSearch1() {
-		assertEquals( [].toString(), sortedArray( callback( tree.search, -2., -2., 4., 4. ) ).toString() );
+		assertEquals( [].toString(), sortedArray( tree.search.bind( -2., -2., 4., 4. ) ).toString() );
 		tree.insertPoint( 0., 0., 0 );
-		assertEquals( [0].toString(), sortedArray( callback( tree.search, -2., -2., 4., 4. ) ).toString() );
-		assertEquals( [0].toString(), sortedArray( callback( tree.search, 0., -2., 2., 4. ) ).toString() );
-		assertEquals( [0].toString(), sortedArray( callback( tree.search, -2., 0., 4., 2. ) ).toString() );
-		assertEquals( [0].toString(), sortedArray( callback( tree.search, -2., -2., 2., 4. ) ).toString() );
-		assertEquals( [0].toString(), sortedArray( callback( tree.search, -2., -2., 4., 2. ) ).toString() );
-		assertEquals( [0].toString(), sortedArray( callback( tree.search, 0., 0., 0., 0. ) ).toString() );
+		assertEquals( [0].toString(), sortedArray( tree.search.bind( -2., -2., 4., 4. ) ).toString() );
+		assertEquals( [0].toString(), sortedArray( tree.search.bind( 0., -2., 2., 4. ) ).toString() );
+		assertEquals( [0].toString(), sortedArray( tree.search.bind( -2., 0., 4., 2. ) ).toString() );
+		assertEquals( [0].toString(), sortedArray( tree.search.bind( -2., -2., 2., 4. ) ).toString() );
+		assertEquals( [0].toString(), sortedArray( tree.search.bind( -2., -2., 4., 2. ) ).toString() );
+		assertEquals( [0].toString(), sortedArray( tree.search.bind( 0., 0., 0., 0. ) ).toString() );
 		tree.insertPoint( 1., -1., 1 );
-		assertEquals( [0, 1].toString(), sortedArray( callback( tree.search, -2., -2., 4., 4. ) ).toString() );
-		assertEquals( [0, 1].toString(), sortedArray( callback( tree.search, 0., -1., 1., 1. ) ).toString() );
-		assertEquals( [0].toString(), sortedArray( callback( tree.search, 0., 0., 1., 0. ) ).toString() );
-		assertEquals( [1].toString(), sortedArray( callback( tree.search, .5, -2., 1., 1.5 ) ).toString() );
+		assertEquals( [0, 1].toString(), sortedArray( tree.search.bind( -2., -2., 4., 4. ) ).toString() );
+		assertEquals( [0, 1].toString(), sortedArray( tree.search.bind( 0., -1., 1., 1. ) ).toString() );
+		assertEquals( [0].toString(), sortedArray( tree.search.bind( 0., 0., 1., 0. ) ).toString() );
+		assertEquals( [1].toString(), sortedArray( tree.search.bind( .5, -2., 1., 1.5 ) ).toString() );
 	}
 	
 	@description( 'basic search test with up to 3 rectangles' )
@@ -148,23 +143,23 @@ class RjTreeComprehensiveTest extends TestCase {
 		tree.insertRectangle( 0, 0, 10, 10, 0 );
 		tree.insertRectangle( 20, 20, 10, 10, 1 );
 		tree.insertRectangle( -10, -10, 50, 50, 2 );
-		assertEquals( [0, 1, 2].toString(), sortedArray( callback( tree.search, -10, -10, 50, 50 ) ).toString(), pos_infos( 'everything' ) );
-		assertEquals( [2].toString(), sortedArray( callback( tree.search, 10.1, 10.1, 9.8, 9.8 ) ).toString(), pos_infos( 'internal' ) );
-		assertEquals( [0, 2].toString(), sortedArray( callback( tree.search, -5, -5, 10, 10 ) ).toString(), pos_infos( 'partial' ) );
+		assertEquals( [0, 1, 2].toString(), sortedArray( tree.search.bind( -10, -10, 50, 50 ) ).toString(), pos_infos( 'everything' ) );
+		assertEquals( [2].toString(), sortedArray( tree.search.bind( 10.1, 10.1, 9.8, 9.8 ) ).toString(), pos_infos( 'internal' ) );
+		assertEquals( [0, 2].toString(), sortedArray( tree.search.bind( -5, -5, 10, 10 ) ).toString(), pos_infos( 'partial' ) );
 	}
 	
 	@description( 'test if width and height are being consistently passed around' )
 	public function testSearch3() {
 		tree.insertRectangle( -10, -5, 50, 35, 1 ); // ( -10, -5 ), ( 40, 30 )
-		assertEquals( [1].toString(), sortedArray( callback( tree.search, -10, -5, 50, 35 ) ).toString(), pos_infos( 'exact' ) );
-		assertEquals( [1].toString(), sortedArray( callback( tree.search, -10, -5, 0, 35 ) ).toString(), pos_infos( 'close on lower x' ) );
-		assertEquals( [1].toString(), sortedArray( callback( tree.search, -10, -5, 50, 0 ) ).toString(), pos_infos( 'close on lower y' ) );
-		assertEquals( [1].toString(), sortedArray( callback( tree.search, 40, -5, 0, 35 ) ).toString(), pos_infos( 'close on upper x' ) );
-		assertEquals( [1].toString(), sortedArray( callback( tree.search, -10, 30, 50, 0 ) ).toString(), pos_infos( 'close on upper y' ) );
-		assertEquals( [].toString(), sortedArray( callback( tree.search, -20, -5, 9.99, 45 ) ).toString(), pos_infos( 'under x' ) );
-		assertEquals( [].toString(), sortedArray( callback( tree.search, -10, -15, 50, 9.99 ) ).toString(), pos_infos( 'under y' ) );
-		assertEquals( [].toString(), sortedArray( callback( tree.search, 40.01, -5, 50, 45 ) ).toString(), pos_infos( 'over x' ) );
-		assertEquals( [].toString(), sortedArray( callback( tree.search, -10, 30.01, 50, 45 ) ).toString(), pos_infos( 'over y' ) );
+		assertEquals( [1].toString(), sortedArray( tree.search.bind( -10, -5, 50, 35 ) ).toString(), pos_infos( 'exact' ) );
+		assertEquals( [1].toString(), sortedArray( tree.search.bind( -10, -5, 0, 35 ) ).toString(), pos_infos( 'close on lower x' ) );
+		assertEquals( [1].toString(), sortedArray( tree.search.bind( -10, -5, 50, 0 ) ).toString(), pos_infos( 'close on lower y' ) );
+		assertEquals( [1].toString(), sortedArray( tree.search.bind( 40, -5, 0, 35 ) ).toString(), pos_infos( 'close on upper x' ) );
+		assertEquals( [1].toString(), sortedArray( tree.search.bind( -10, 30, 50, 0 ) ).toString(), pos_infos( 'close on upper y' ) );
+		assertEquals( [].toString(), sortedArray( tree.search.bind( -20, -5, 9.99, 45 ) ).toString(), pos_infos( 'under x' ) );
+		assertEquals( [].toString(), sortedArray( tree.search.bind( -10, -15, 50, 9.99 ) ).toString(), pos_infos( 'under y' ) );
+		assertEquals( [].toString(), sortedArray( tree.search.bind( 40.01, -5, 50, 45 ) ).toString(), pos_infos( 'over x' ) );
+		assertEquals( [].toString(), sortedArray( tree.search.bind( -10, 30.01, 50, 45 ) ).toString(), pos_infos( 'over y' ) );
 	}
 	
 	@description( 'basic removal test with up to 4 objects' )
@@ -235,7 +230,7 @@ class RjTreeComprehensiveTest extends TestCase {
 	}
 	
 	function runTestRandom( size : Int ) {
-		var times = new Hash();
+		var times = new Map();
 		var sw = new StopWatch();
 		
 		// insertion
@@ -320,102 +315,6 @@ class RjTreeComprehensiveTest extends TestCase {
 		}
 		
 		return times;
-	}
-	
-}
-
-private class RjTreeTest extends TestCase {
-	
-	var ncoordinates : Int;
-	var ninsertions : Int;
-	var rt : RjTree<Int>;
-	
-	public function new() {
-		super();
-		var params = [
-			{ c : 5, i : 10 },
-			{ c : 10, i : 1000 },
-			{ c : 1, i : 1000 },
-			{ c : 1000, i : 1000 },
-			{ c : 50000, i : 100000 },
-			{ c : 100000, i : 100000 }
-		];
-		for ( p in params )
-			set_configuration( Std.string( p ), p );
-	}
-	
-	override public function tearDown() : Void {
-		rt = null;
-	}
-	
-	override function configure( name : String ) : Void {
-		var c = _configs.get( name );
-		if ( null == c ) {
-			ncoordinates = 20;
-			ninsertions = 200;
-		}
-		else {
-			ncoordinates = c.c;
-			ninsertions = c.i;
-		}
-	}
-	
-	function reset() : Void {
-		rt = new RjTree();
-	}
-	
-	function prepare() : Void {
-		reset();
-	}
-	
-	public function test_in_and_query() : Void {
-		trace( { coordinates : ncoordinates, insertions : ninsertions } );
-		Timer.measure( _test_in_and_query );
-	}
-	
-	function _test_in_and_query() : Void {
-		prepare();
-		
-		trace( 'Creating coordinates' );
-		
-		var x = new Array();
-		var y = new Array();
-		var cs = new Array(); // count
-		for ( r in 0...ncoordinates ) {
-			x.push( Math.random() );
-			y.push( Math.random() );
-			cs.push( 0 );
-		}
-		
-		trace( 'Inserting on DS' );
-		
-		for ( i in 0...ninsertions ) {
-			var r = Std.random( ncoordinates );
-			rt.insertPoint( x[r], y[r], r );
-			//trace( { i : i + 1, x : x[r], y : y[r] } );
-			cs[r]++;
-		}
-		
-		//trace( rt );
-		
-		//for ( r in 0...ncoordinates ) {
-			//trace( 'for r=' + r + ' x=' + x[r] + ' y=' + y[r] + ' ' + rt.search_rectangle( x[r], y[r], x[r], y[r] ) + rt.search_rectangle( x[r] - .0001, y[r] - .0001, x[r] + .0001, y[r] + .0001 ));
-		//}
-		
-		trace( 'Basic DS checking' );
-		assertEquals( ninsertions, rt.length, pos_infos( 'tree.size' ) );
-		//assertTrue( rt.verify() );
-		
-		trace( 'Searching on and checking the DS' );
-		
-		for ( r in 0...ncoordinates ) {
-			var s = Lambda.list( { iterator : callback( rt.search, x[r], y[r], 0., 0. ) } );
-			assertEquals( cs[r], s.length, pos_infos( 'length' ) );
-			//trace( s );
-			for ( e in s )
-				assertEquals( r, e, pos_infos( 'coordinates' ) ); 
-		}
-		
 	}
 	
 }

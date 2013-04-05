@@ -1,15 +1,12 @@
 package jonas;
 
-import haxe.BaseCode;
+import haxe.crypto.BaseCode;
 import haxe.io.Bytes;
 using StringTools;
 
 /**
- * Base64 encoder/decoder
- * Copyright (c) 2012 Jonas Malaco Filho
- * Licensed under the MIT license. Check LICENSE.txt for more information.
- */
-
+	Base64 encoder/decoder
+**/
 class Base64 {
 
 	var line_length : Int;

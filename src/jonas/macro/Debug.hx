@@ -7,18 +7,14 @@ using jonas.macro.ExprTools;
 #end
 
 /**
- * In-code debugging tools
- * Only enabled in debug mode (-debug)
- * Requires tink_macros for expression stringfication
- * 
- * Copyright (c) 2012 Jonas Malaco Filho
- * Licensed under the MIT license. Check LICENSE.txt for more information.
- */
-
+	In-code debugging tools
+	Only enabled in debug mode (-debug)
+	Requires tink_macros for expression stringfication
+**/
 class Debug {
 
 	/* Traces "false" if v==false */
-	@:macro public static function assertTrue( v : ExprOf<Bool> ) {
+	public static macro function assertTrue( v : ExprOf<Bool> ) {
 		#if debug
 		var str = Context.makeExpr( 'Assert "' + v.toString() + '": false', v.pos );
 		return ExprTools.make( EIf( ExprTools.make( EUnop( OpNot, false, v ) ), ExprTools.trce( str ), null ) );
@@ -28,7 +24,7 @@ class Debug {
 	}
 
 	/* Traces v if cond==true */
-	@:macro public static function assertIf( cond : ExprOf<Bool>, v : Expr ) {
+	public static macro function assertIf( cond : ExprOf<Bool>, v : Expr ) {
 		#if debug
 		var str = Context.makeExpr( '"' + cond.toString() + '"==true triggered assert "' + v.toString() + '": ', v.pos );
 		return ExprTools.make( EIf( cond, ExprTools.trce( ExprTools.make( EBinop( OpAdd, str, v ) ) ), null ) );
@@ -38,7 +34,7 @@ class Debug {
 	}
 
 	/* Traces v */
-	@:macro public static function assert( v : Expr ) {
+	public static macro function assert( v : Expr ) {
 		#if debug
 		var str = Context.makeExpr( 'Assert "' + v.toString() + '": ', Context.currentPos() );
 		return ExprTools.trce( ExprTools.make( EBinop( OpAdd, str, v ) ) );

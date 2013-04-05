@@ -1,13 +1,13 @@
 -cp src
--lib jonas-haxe
+-cp ../src
 -debug
 -main Tests
 -neko bin/neko/Tests.n
 
---next
-
--cp src
--lib jonas-haxe
--debug
--main Tests
--cpp bin/cpp
+#--next
+#
+#-cp src
+#-cp ../src
+#-debug
+#-main Tests
+#-cpp bin/cpp

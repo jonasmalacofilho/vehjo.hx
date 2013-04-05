@@ -4,21 +4,20 @@ import jonas.RevIntIterator;
 import jonas.Vector;
 
 /**
- * R-Tree variant 'j'
- * 
- * Differences from the original R-Tree:
-	 * nodes may have simultaneously both node and object entries, so no node splitting algorithm  
-	 * forced 1-level reinsertion on node overflow (from R*-Tree/can be turned off)
- * 
- * Compilation switches:
- * RJTREE_DEBUG:
-	 * enables access to node level and bounding box information
- * RJTREE_LISTS
-     * use List (instead of Array) as bucket entries container
- * 
- * Copyright (c) 2012 Jonas Malaco Filho
- * Licensed under the MIT license. Check LICENSE.txt for more information.
- */
+	R-Tree variant 'j'
+	
+	Differences from the original R-Tree:
+	-	nodes may have simultaneously both node and object entries,
+		so no node splitting algorithm  
+	-	forced 1-level reinsertion on node overflow
+		(from R*-Tree/can be turned off)
+	
+	Compilation switches:
+	RJTREE_DEBUG:
+		enables access to node level and bounding box information
+	RJTREE_LISTS
+    	use List (instead of Array) as bucket entries container
+ **/
 class RjTree<T> implements RTree<T> {
 	
 	
@@ -136,9 +135,9 @@ class RjTree<T> implements RTree<T> {
 				switch ( ent ) {
 					case Node( entChild ) :
 						stack.add( entChild );
-					case LeafPoint( entObject, entX, entY ) :
+					case LeafPoint( entObject, _ ) :
 						cache.add( entObject );
-					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+					case LeafRectangle( entObject, _ ) :
 						cache.add( entObject );
 					default : throw 'Unexpected ' + ent;
 				}
@@ -173,13 +172,13 @@ class RjTree<T> implements RTree<T> {
 				yMin1 = Math.min( yMin, entChild.yMin );
 				xMax1 = Math.max( xMax, entChild.xMax );
 				yMax1 = Math.max( yMax, entChild.yMax );
-			case LeafPoint( entObject, entX, entY ) :
+			case LeafPoint( _, entX, entY ) :
 				a0 = 0.;
 				xMin1 = Math.min( xMin, entX );
 				yMin1 = Math.min( yMin, entY );
 				xMax1 = Math.max( xMax, entX );
 				yMax1 = Math.max( yMax, entY );
-			case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+			case LeafRectangle( _, entX, entY, entWidth, entHeight ) :
 				a0 = rectangleArea( entX, entY, entX + entWidth, entY + entHeight );
 				xMin1 = Math.min( xMin, entX );
 				yMin1 = Math.min( yMin, entY );
@@ -219,13 +218,13 @@ class RjTree<T> implements RTree<T> {
 		var pi = -1;
 		#end
 		var p = switch ( ent ) {
-			case LeafPoint( entObject, entX, entY ) :
+			case LeafPoint( _, entX, entY ) :
 				#if RJTREE_LISTS
 				chooseEntryToInsert( entX, entY, entX, entY );
 				#else
 				entries[ pi = chooseEntryToInsert( entX, entY, entX, entY ) ];
 				#end
-			case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) :
+			case LeafRectangle( _, entX, entY, entWidth, entHeight ) :
 				#if RJTREE_LISTS
 				chooseEntryToInsert( entX, entY, entX + entWidth, entY + entHeight );
 				#else
@@ -267,8 +266,8 @@ class RjTree<T> implements RTree<T> {
 			// just push
 			entries.push( ent );
 			switch ( ent ) {
-				case LeafPoint( entObject, entX, entY ) : expandBoundingBox( entX, entY, entX, entY ); 
-				case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : expandBoundingBox( entX, entY, entX + entWidth, entY + entHeight );
+				case LeafPoint( _, entX, entY ) : expandBoundingBox( entX, entY, entX, entY ); 
+				case LeafRectangle( _, entX, entY, entWidth, entHeight ) : expandBoundingBox( entX, entY, entX + entWidth, entY + entHeight );
 				default : throw 'Unexpected ' + ent;
 			}
 		}
@@ -317,7 +316,7 @@ class RjTree<T> implements RTree<T> {
 							removed++;
 							computeBoundingBox();
 						}
-					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : // nothing to do
+					case LeafRectangle( _ ) : // nothing to do
 					default : throw 'Unexpected ' + ent;
 				}
 			}
@@ -342,7 +341,7 @@ class RjTree<T> implements RTree<T> {
 					case Node( entChild ) : 
 						removed += entChild.removeRectangle( x, y, width, height, object );
 					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : 
-						if ( entX == x && entY == y && entWidth == width && height == height && ( null == object || entObject == object ) ) {
+						if ( entX == x && entY == y && entWidth == width && entHeight == height && ( null == object || entObject == object ) ) {
 							#if RJTREE_LISTS
 							entries.remove( ent );
 							#else
@@ -354,7 +353,7 @@ class RjTree<T> implements RTree<T> {
 							removed++;
 							computeBoundingBox();
 						}
-					case LeafPoint( entObject, entX, entY ) : // nothing to do
+					case LeafPoint( _ ) : // nothing to do
 					default : throw 'Unexpected ' + ent;
 				}
 			}
@@ -374,7 +373,7 @@ class RjTree<T> implements RTree<T> {
 				switch ( ent ) {
 					case Node( entChild ) : 
 						removed += entChild.removeObject( object );
-					case LeafPoint( entObject, entX, entY ) : 
+					case LeafPoint( entObject, _ ) : 
 						if ( entObject == object ) {
 							#if RJTREE_LISTS
 							entries.remove( ent );
@@ -387,7 +386,7 @@ class RjTree<T> implements RTree<T> {
 							removed++;
 							computeBoundingBox();
 						}
-					case LeafRectangle( entObject, entX, entY, entWidth, entHeight ) : 
+					case LeafRectangle( entObject, _ ) : 
 						if ( entObject == object ) {
 							#if RJTREE_LISTS
 							entries.remove( ent );
@@ -441,12 +440,12 @@ class RjTree<T> implements RTree<T> {
 					yMin = Math.min( yMin, entChild.yMin );
 					xMax = Math.max( xMax, entChild.xMax );
 					yMax = Math.max( yMax, entChild.yMax );
-				case LeafPoint( entChild, entX, entY ) :
+				case LeafPoint( _, entX, entY ) :
 					xMin = Math.min( xMin, entX );
 					yMin = Math.min( yMin, entY );
 					xMax = Math.max( xMax, entX );
 					yMax = Math.max( yMax, entY );
-				case LeafRectangle( entChild, entX, entY, entWidth, entHeight ) :
+				case LeafRectangle( _, entX, entY, entWidth, entHeight ) :
 					xMin = Math.min( xMin, entX );
 					yMin = Math.min( yMin, entY );
 					xMax = Math.max( xMax, entX + entWidth );

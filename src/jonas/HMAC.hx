@@ -6,19 +6,15 @@ using jonas.Base16;
 using jonas.io.BytesExtension;
 
 /**
- * Haxe implementation for RFC 2104 - HMAC: Keyed-Hashing for Message Authentication
- *                  HMAC = H( K XOR opad, H( K XOR ipad, text ) )
- * 
- * References:
- * http://tools.ietf.org/html/rfc2104: HMAC: Keyed-Hashing for Message Authentication
- * http://tools.ietf.org/html/rfc2202: Test Cases for HMAC-MD5 and HMAC-SHA-1
- * 
- * Depends on the hash implementation being able to handle any binary data in strings
- * 
- * Copyright (c) 2012 Jonas Malaco Filho
- * Licensed under the MIT license. Check LICENSE.txt for more information.
- */
-
+	Haxe implementation for RFC 2104 - HMAC: Keyed-Hashing for Message Authentication
+	                 HMAC = H( K XOR opad, H( K XOR ipad, text ) )
+	
+	References:
+	http://tools.ietf.org/html/rfc2104: HMAC: Keyed-Hashing for Message Authentication
+	http://tools.ietf.org/html/rfc2202: Test Cases for HMAC-MD5 and HMAC-SHA-1
+	
+	Depends on the hash implementation being able to handle any binary data in strings
+**/
 class HMAC {
 	
 	var B : Int;
@@ -76,12 +72,12 @@ class HMAC_Md5 extends HMAC {
 		B = 64;
 	}
 	override function hash( b : Bytes ) : String {
-		return haxe.Md5.encode( b.toString() );
+		return haxe.crypto.Md5.encode( b.toString() );
 	}
 }
 
 class HMAC_SHA1 extends HMAC_Md5 {
 	override function hash( b : Bytes ) : String {
-		return haxe.SHA1.encode( b.toString() );
+		return haxe.crypto.Sha1.encode( b.toString() );
 	}
 }

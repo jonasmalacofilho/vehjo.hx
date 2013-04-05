@@ -2,33 +2,9 @@ package jonas.unit;
 
 import haxe.PosInfos;
 
-/*
- * 
- * Copyright (c) 2012 Jonas Malaco Filho
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-
 class TestCase extends haxe.unit.TestCase {
 	
-	public var _configs : Hash<Dynamic>;
+	public var _configs:Map<String,Dynamic>;
 	public var _config_current : String;
 	public var _config_default : String;
 	
@@ -36,7 +12,7 @@ class TestCase extends haxe.unit.TestCase {
 		_config_current = null;
 		_config_default = 'default';
 		if ( null == _configs )
-			_configs = new Hash();
+			_configs = new Map<String,Dynamic>();
 		super();
 	}
 

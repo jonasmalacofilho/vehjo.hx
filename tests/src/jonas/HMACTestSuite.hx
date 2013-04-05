@@ -1,17 +1,14 @@
 package jonas;
 
-import haxe.BaseCode;
-import haxe.Md5;
+import haxe.crypto.BaseCode;
+import haxe.crypto.Md5;
 import jonas.HMAC;
 import jonas.io.BytesExtension;
 using jonas.Base16;
 
-/*
- * HMAC test suite
- * Copyright (c) 2012 Jonas Malaco Filho
- * Licensed under the MIT license. Check LICENSE.txt for more information.
- */
-
+/**
+	HMAC test suite
+**/
 class HMACTestCase extends jonas.unit.TestCase {
 	var key : String;
 	var data : String;
@@ -53,8 +50,8 @@ class HMACTestCase extends jonas.unit.TestCase {
 				HMAC.hmac_md5( key, data, truncate );
 			case 'sha1' :
 				HMAC.hmac_sha1( key, data, truncate );
-			default : throw Std.format( 'unkown hash function $hash' );
-		}, pos_infos( Std.format( 'unsafe string based hash function ($hash)' ) ) );
+			case _: throw 'unkown hash function $hash';
+		}, pos_infos( 'unsafe string based hash function ($hash)' ) );
 	}
 	
 }

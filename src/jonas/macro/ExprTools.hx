@@ -3,7 +3,6 @@ package jonas.macro;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import jonas.Lam;
-import jonas.macro.inc.Printer;
 
 /**
  * Expr tools
@@ -29,7 +28,7 @@ class ExprTools {
 	}
 
 	public static function toString( e : Expr ) : String {
-		return Printer.print( e );
+		return new haxe.macro.Printer().printExpr( e );
 	}
 
 	public static function ifNull( e : Expr, fallback : Expr ) : Expr {

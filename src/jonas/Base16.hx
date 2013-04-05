@@ -1,14 +1,11 @@
 package jonas;
 
-import haxe.BaseCode;
+import haxe.crypto.BaseCode;
 import haxe.io.Bytes;
 
 /**
- * Base16 (hex) encoder/decoder
- * Copyright (c) 2012 Jonas Malaco Filho
- * Licensed under the MIT license. Check LICENSE.txt for more information.
- */
-
+	Base16 (hex) encoder/decoder
+**/
 class Base16 {
 	
 	static var base = Bytes.ofString( '0123456789abcdef' );

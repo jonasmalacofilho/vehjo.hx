@@ -60,7 +60,7 @@ class TestRunner extends haxe.unit.TestRunner {
 		var t2 : jonas.unit.TestCase = Std.is( t, jonas.unit.TestCase ) ? cast t : null;
 		var fields = Type.getInstanceFields(cl);
 		//var msg = '';
-		var configs = null != t2 ? t2._configs : new Hash();
+		var configs = null != t2 ? t2._configs : new Map<String,Dynamic>();
 		if ( 0 == Lambda.count( configs ) )
 			configs.set( '', null );
 		var cnames = Lambda.array( { iterator : configs.keys } );
@@ -102,7 +102,7 @@ class TestRunner extends haxe.unit.TestRunner {
 					}catch ( e : TestStatus ){
 						//msg += 'F';
 						print( 'F' );
-						t.currentTest.backtrace = haxe.Stack.toString(haxe.Stack.exceptionStack());
+						t.currentTest.backtrace = haxe.CallStack.toString(haxe.CallStack.exceptionStack());
 					}catch ( e : Dynamic ){
 						print( 'E' );
 						#if js
@@ -114,7 +114,7 @@ class TestRunner extends haxe.unit.TestRunner {
 						#else
 						t.currentTest.error = "exception thrown : "+e;
 						#end
-						t.currentTest.backtrace = haxe.Stack.toString(haxe.Stack.exceptionStack());
+						t.currentTest.backtrace = haxe.CallStack.toString(haxe.CallStack.exceptionStack());
 					}
 					result.add(t.currentTest);
 					t.tearDown();
