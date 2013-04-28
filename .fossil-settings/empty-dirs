@@ -1,7 +1,0 @@
-src
-dev
-tests
-tests/bin/cpp
-tests/bin/js
-tests/bin/neko
-tests/bin/swf
