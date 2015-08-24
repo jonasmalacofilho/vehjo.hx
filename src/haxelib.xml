@@ -1,6 +1,0 @@
-<project name="jonas-haxe" url="https://jonasmalaco.com/fossil/jonas-haxe" license="MIT">
-	<user name="jonasmalacofilho"/>
-	<tag v="cross"/>
-	<description>An open-source collection of data structures and algorithms in Haxe</description>
-	<version name="0.0">Dev version</version>
-</project>

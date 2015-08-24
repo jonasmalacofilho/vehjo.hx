@@ -1,5 +1,5 @@
 -cp src
--cp ../src
+-lib vehjo
 -debug
 -main Tests
 -neko bin/neko/Tests.n
@@ -7,7 +7,8 @@
 #--next
 #
 #-cp src
-#-cp ../src
+#-lib vehjo
 #-debug
 #-main Tests
 #-cpp bin/cpp
+

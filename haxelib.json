@@ -1,0 +1,13 @@
+{
+	"name"         :  "vehjo",
+	"url"          :  "https://github.com/jonasmalacofilho/vehjo.hx",
+	"license"      :  "MIT",
+	"tags"         :  [],
+	"description"  :  "Assortment of data structures, algorithms and tools in Haxe",
+	"version"      :  "0.1.0",
+	"classPath"    :  "lib",
+	"releasenote"  :  "Partially ported to Haxe 3",
+	"contributors" :  ["jonasmalacofilho", "elebeta"],
+	"dependencies" :  {}
+}
+

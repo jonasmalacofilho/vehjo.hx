@@ -1,4 +1,4 @@
-import jonas.Lam;
+import vehjo.Lam;
 
 class TestLam implements Tests<Int> {
 
@@ -7,7 +7,7 @@ class TestLam implements Tests<Int> {
 
 	public function new( it: Iterable<Int> ) {
 		this.it = Lambda.array( it );
-		name = 'jonas.Lam';
+		name = 'vehjo.Lam';
 	}
 
 	public function testFoldSum() {

@@ -1,5 +1,5 @@
-import jonas.macro.Debug;
-using jonas.LazyLambda;
+import vehjo.macro.Debug;
+using vehjo.LazyLambda;
 
 class Main {
 	static function main() {

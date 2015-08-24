@@ -1,6 +1,6 @@
-import jonas.Statistics;
-using jonas.LazyLambda;
-using jonas.NumberPrinter;
+import vehjo.Statistics;
+using vehjo.LazyLambda;
+using vehjo.NumberPrinter;
 
 class BenchmarkLambda {
 	static function main() {

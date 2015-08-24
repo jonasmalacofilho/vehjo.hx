@@ -1,4 +1,4 @@
-using jonas.LazyLambda;
+using vehjo.LazyLambda;
 
 class TestLazyLambda implements Tests<Int> {
 
@@ -7,7 +7,7 @@ class TestLazyLambda implements Tests<Int> {
 
 	public function new( it: Iterable<Int> ) {
 		this.it = Lambda.array( it );
-		name = 'jonas.LazyLambda';
+		name = 'vehjo.LazyLambda';
 	}
 
 	public function testFoldSum() {
