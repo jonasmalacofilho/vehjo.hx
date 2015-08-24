@@ -16,7 +16,7 @@ using jonas.macro.ExprTools;
 
 class Error {
 
-	@:macro public static function throwIf( cond : ExprOf<Bool>, ?expr : Expr ) {
+	public macro static function throwIf( cond : ExprOf<Bool>, ?expr : Expr ) {
 		expr = ExprTools.ifNull( expr, Context.makeExpr( '"' + cond.toString() + '" raised', cond.pos ) );
 		return ExprTools.make( EIf( cond, ExprTools.make( EThrow( expr ) ), ExprTools.makeEmpty() ) );
 	}

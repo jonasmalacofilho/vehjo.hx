@@ -28,7 +28,7 @@ class LazyLambda {
 	/**
 		Concatenates two collections
 	**/
-	@:macro public static function concat<A>( it1: ExprOf<Iterable<A>>, it2: ExprOf<Iterable<A>> ): ExprOf<Iterable<A>> {
+	public macro static function concat<A>( it1: ExprOf<Iterable<A>>, it2: ExprOf<Iterable<A>> ): ExprOf<Iterable<A>> {
 		return ( macro {
 			var __lazy_lambda__itble1 = $it1;
 			var __lazy_lambda__itble2 = $it2;
@@ -80,7 +80,7 @@ class LazyLambda {
 		Filters a collection using the supplied expression "filter" 
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function filter<A>( it: ExprOf<Iterable<A>>, filter: ExprOf<Bool> ): ExprOf<Iterable<A>> {
+	public macro static function filter<A>( it: ExprOf<Iterable<A>>, filter: ExprOf<Bool> ): ExprOf<Iterable<A>> {
 		var inspect = inspectIdentifiers( filter );
 		filter = inspect.uExpr;
 		var exposedIndex = false;
@@ -152,7 +152,7 @@ class LazyLambda {
 		Returns the first element in a collection that matches the expression "cond"
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function find<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Null<Int>> {
+	public macro static function find<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Null<Int>> {
 		var inspect = inspectIdentifiers( cond );
 		cond = inspect.uExpr;
 		var exposedIndex = false;
@@ -191,7 +191,7 @@ class LazyLambda {
 		Functional fold
 		Exposed variables: $pre (previous return value), $x (element) and $i (element index)
 	**/
-	@:macro public static function fold<A,B>( it: ExprOf<Iterable<A>>, fold: ExprOf<B>, first: ExprOf<B> ): ExprOf<B> {
+	public macro static function fold<A,B>( it: ExprOf<Iterable<A>>, fold: ExprOf<B>, first: ExprOf<B> ): ExprOf<B> {
 		var inspect = inspectIdentifiers( fold );
 		fold = inspect.uExpr;
 		var exposedIndex = false;
@@ -224,7 +224,7 @@ class LazyLambda {
 		Groups values acording to equal string keys
 		Returns a jonas.ds.MultiHash
 	**/
-	@:macro public static function groupByHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<String> ): ExprOf<Hash<A>> {
+	public macro static function groupByHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<String> ): ExprOf<Map<String, A>> {
 		var inspect = inspectIdentifiers( key );
 		key = inspect.uExpr;
 		var exposedIndex = false;
@@ -257,7 +257,7 @@ class LazyLambda {
 		Groups values acording to equal integer keys
 		Returns a jonas.ds.IntMultiHash
 	**/
-	@:macro public static function groupByIntHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<Int> ): ExprOf<IntHash<A>> {
+	public macro static function groupByIntHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<Int> ): ExprOf<Map<Int, A>> {
 		var inspect = inspectIdentifiers( key );
 		key = inspect.uExpr;
 		var exposedIndex = false;
@@ -289,7 +289,7 @@ class LazyLambda {
 	/**
 		Builds a Hash from values, using expression "key" for keys
 	**/
-	@:macro public static function hash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<String> ): ExprOf<Hash<A>> {
+	public macro static function hash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<String> ): ExprOf<Map<String, A>> {
 		var inspect = inspectIdentifiers( key );
 		key = inspect.uExpr;
 		var exposedIndex = false;
@@ -300,7 +300,7 @@ class LazyLambda {
 
 		if ( exposedIndex )
 			return ( macro {
-				var __lazy_lambda__ret = new Hash();
+				var __lazy_lambda__ret = new Map();
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.set( $key, __lazy_lambda__x );
@@ -321,7 +321,7 @@ class LazyLambda {
 	/**
 		Builds a Hash from keys, using expression "value" for values
 	**/
-	@:macro public static function hashFromKeys<A>( it: ExprOf<Iterable<String>>, value: ExprOf<A> ): ExprOf<Hash<A>> {
+	public macro static function hashFromKeys<A>( it: ExprOf<Iterable<String>>, value: ExprOf<A> ): ExprOf<Map<String, A>> {
 		var inspect = inspectIdentifiers( value );
 		value = inspect.uExpr;
 		var exposedIndex = false;
@@ -332,7 +332,7 @@ class LazyLambda {
 
 		if ( exposedIndex )
 			return ( macro {
-				var __lazy_lambda__ret = new Hash();
+				var __lazy_lambda__ret = new Map();
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.set( __lazy_lambda__x, $value );
@@ -342,7 +342,7 @@ class LazyLambda {
 			} ).changePos( it.pos );
 		else
 			return ( macro {
-				var __lazy_lambda__ret = new Hash();
+				var __lazy_lambda__ret = new Map();
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.set( __lazy_lambda__x, $value );
 				}
@@ -353,7 +353,7 @@ class LazyLambda {
 	/**
 		Builds an IntHash from values, using expression "key" for keys
 	**/
-	@:macro public static function intHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<Int> ): ExprOf<IntHash<A>> {
+	public macro static function intHash<A>( it: ExprOf<Iterable<A>>, key: ExprOf<Int> ): ExprOf<Map<Int, A>> {
 		var inspect = inspectIdentifiers( key );
 		key = inspect.uExpr;
 		var exposedIndex = false;
@@ -364,7 +364,7 @@ class LazyLambda {
 
 		if ( exposedIndex )
 			return ( macro {
-				var __lazy_lambda__ret = new IntHash();
+				var __lazy_lambda__ret = new Map();
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.set( $key, __lazy_lambda__x );
@@ -374,7 +374,7 @@ class LazyLambda {
 			} ).changePos( it.pos );
 		else
 			return ( macro {
-				var __lazy_lambda__ret = new IntHash();
+				var __lazy_lambda__ret = new Map();
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.set( $key, __lazy_lambda__x );
 				}
@@ -385,7 +385,7 @@ class LazyLambda {
 	/**
 		Builds an IntHash from keys, using expression "value" for values
 	**/
-	@:macro public static function intHashFromKeys<A>( it: ExprOf<Iterable<Int>>, value: ExprOf<A> ): ExprOf<IntHash<A>> {
+	public macro static function intHashFromKeys<A>( it: ExprOf<Iterable<Int>>, value: ExprOf<A> ): ExprOf<Map<Int, A>> {
 		var inspect = inspectIdentifiers( value );
 		value = inspect.uExpr;
 		var exposedIndex = false;
@@ -396,7 +396,7 @@ class LazyLambda {
 
 		if ( exposedIndex )
 			return ( macro {
-				var __lazy_lambda__ret = new IntHash();
+				var __lazy_lambda__ret = new Map();
 				var __lazy_lambda__i = 0;
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.set( __lazy_lambda__x, $value );
@@ -406,7 +406,7 @@ class LazyLambda {
 			} ).changePos( it.pos );
 		else
 			return ( macro {
-				var __lazy_lambda__ret = new IntHash();
+				var __lazy_lambda__ret = new Map();
 				for ( __lazy_lambda__x in $it.iterator() ) {
 					__lazy_lambda__ret.set( __lazy_lambda__x, $value );
 				}
@@ -418,7 +418,7 @@ class LazyLambda {
 		Tells if the expression "cond" evaluates to true for ALL elements in a collection
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function holds<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Bool> {
+	public macro static function holds<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Bool> {
 		var inspect = inspectIdentifiers( cond );
 		cond = inspect.uExpr;
 		var exposedIndex = false;
@@ -457,7 +457,7 @@ class LazyLambda {
 		Tells if the expression "cond" evaluates to true for AT LEAST ONE element in a collection
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function holdsOnce<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Bool> {
+	public macro static function holdsOnce<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Bool> {
 		var inspect = inspectIdentifiers( cond );
 		cond = inspect.uExpr;
 		var exposedIndex = false;
@@ -496,7 +496,7 @@ class LazyLambda {
 		Returns the index of the first element in a collection that matches the expression "cond"
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function indexOf<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Int> {
+	public macro static function indexOf<A>( it: ExprOf<Iterable<A>>, cond: ExprOf<Bool> ): ExprOf<Int> {
 		var inspect = inspectIdentifiers( cond );
 		cond = inspect.uExpr;
 
@@ -518,7 +518,7 @@ class LazyLambda {
 		Executes the expression "expr" for each element in a collection
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function iter<A>( it: ExprOf<Iterable<A>>, expr ): ExprOf<Void> {
+	public macro static function iter<A>( it: ExprOf<Iterable<A>>, expr ): ExprOf<Void> {
 		var inspect = inspectIdentifiers( expr );
 		expr = inspect.uExpr;
 		var exposedIndex = false;
@@ -556,7 +556,7 @@ class LazyLambda {
 		Transforms an iterator into a lazy iterable
 		Behare of side-effects on the expression "it"
 	**/
-	@:macro public static function lazy<A>( it: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
+	public macro static function lazy<A>( it: ExprOf<Iterator<A>> ): ExprOf<Iterable<A>> {
 		return ( macro {
 			{ iterator: function () return $it };
 		} ).changePos( it.pos );
@@ -573,7 +573,7 @@ class LazyLambda {
 		Maps every element in a colletion into a new element, using the expression "map"
 		Exposed variables: $x (element) and $i (element index)
 	**/
-	@:macro public static function map<A,B>( it: ExprOf<Iterable<A>>, map: ExprOf<B> ): ExprOf<Iterable<B>> {
+	public macro static function map<A,B>( it: ExprOf<Iterable<A>>, map: ExprOf<B> ): ExprOf<Iterable<B>> {
 		var inspect = inspectIdentifiers( map );
 		map = inspect.uExpr;
 		var exposedIndex = false;
