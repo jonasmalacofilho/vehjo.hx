@@ -27,6 +27,7 @@ class Tests {
 		var t = new vehjo.unit.TestRunner();
 		//t.customTrace = function( v, ?p ) { };
 		t.add( new vehjo.TestGeneric() );
+		t.add( new vehjo.TestTimezone() );
 		vehjo.Base16Tests.add_tests( t );
 		vehjo.Base64TestSuite.add_tests( t );
 		vehjo.HMACTestSuite.add_tests( t ); // js: not suported for there is no Bytes implementation for Md5 or SHA-1 in the std
