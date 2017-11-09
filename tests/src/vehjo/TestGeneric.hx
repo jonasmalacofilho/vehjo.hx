@@ -54,6 +54,7 @@ class TestGeneric extends TestCase {
 		);
 	}
 
+#if (haxe_ver < "4.0.0")
 	public function testHaxeFloatFrom210() {
 		assertTrue( Math.NaN > Math.NaN
 			, pos_infos( 'used to fail: NaN !> NaN' )
@@ -62,6 +63,7 @@ class TestGeneric extends TestCase {
 			, pos_infos( 'used to fail: NaN not finite' )
 		);
 	}
+#end
 
 	public function testGeoidMath() {
 		// Earth radius estimate
