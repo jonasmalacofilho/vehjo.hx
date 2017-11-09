@@ -19,11 +19,11 @@ class Base16Tests extends vehjo.unit.TestCase {
 		super();
 		set_configuration( _config_default = 'basic ASCII', {
 			encoded : '6a6f6e6173313233',
-			decoded : Bytes.ofString( 'vehjo123' ),
+			decoded : Bytes.ofString( 'jonas123' ),
 			problematic : false } );
 		set_configuration( 'not lower case', {
 			encoded : '6a6F6E6173313233',
-			decoded : Bytes.ofString( 'vehjo123' ),
+			decoded : Bytes.ofString( 'jonas123' ),
 			problematic : false } );
 		set_configuration( 'some UTF-8', {
 			encoded : 'c3a7',

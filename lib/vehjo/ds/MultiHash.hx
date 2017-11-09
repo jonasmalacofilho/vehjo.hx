@@ -1,5 +1,9 @@
 package vehjo.ds;
 
+#if (haxe_ver >= "4.0.0")
+import haxe.ds.List;
+#end
+
 /**
 	MultiHash with string keys
 **/
@@ -23,7 +27,7 @@ class MultiHash<T> {
 		return _hash.exists(key);
 	}
 	
-	inline public function get(key : String) : List<T>
+	public function get(key : String) : List<T>
 	{
 		if (exists(key))
 			return _hash.get(key);
@@ -88,7 +92,7 @@ class MultiHash<T> {
 		return _hash.remove(key);
 	}
 	
-	inline public function add( key : String, value : T ) : Void {
+	public function add( key : String, value : T ) : Void {
 		if (exists(key))
 			_hash.get(key).add(value);
 		else
@@ -99,7 +103,7 @@ class MultiHash<T> {
 		}
 	}
 	
-	inline public function push(key : String, value : T) : Void
+	public function push(key : String, value : T) : Void
 	{
 		if (exists(key))
 			_hash.get(key).push(value);
@@ -111,7 +115,7 @@ class MultiHash<T> {
 		}
 	}
 	
-	inline public function pop(key : String) : Null<T>
+	public function pop(key : String) : Null<T>
 	{
 		if (exists(key))
 			return _hash.get(key).pop();
@@ -136,7 +140,7 @@ class MultiHash<T> {
 		return Std.string( _hash );
 	
 	// Version of groupByHash from http://haxe.org/doc/snip/groupbyhash
-	public static function groupByHash<T>(it : Iterable<T>, ?transformer : T -> String) : MultiHash<T>
+	public static function groupByHash<T2>(it : Iterable<T2>, ?transformer : T2 -> String) : MultiHash<T2>
 	{
 		if (transformer == null)
 			transformer = function(x) { return Std.string(x); }

@@ -1,4 +1,5 @@
 -cp src
+-lib hx3compat
 -lib vehjo
 -debug
 -main Tests

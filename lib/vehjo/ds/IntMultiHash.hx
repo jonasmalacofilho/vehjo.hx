@@ -1,5 +1,9 @@
 package vehjo.ds;
 
+#if (haxe_ver >= "4.0.0")
+import haxe.ds.List;
+#end
+
 /**
 	MultiHash with integer keys
 **/
@@ -23,7 +27,7 @@ class IntMultiHash<T> {
 		return _hash.exists(key);
 	}
 	
-	inline public function get(key : Int) : List<T>
+	public function get(key : Int) : List<T>
 	{
 		if (exists(key))
 			return _hash.get(key);
@@ -88,7 +92,7 @@ class IntMultiHash<T> {
 		return _hash.remove(key);
 	}
 	
-	inline public function add( key : Int, value : T ) : Void {
+	public function add( key : Int, value : T ) : Void {
 		if (exists(key))
 			_hash.get(key).add(value);
 		else
@@ -99,7 +103,7 @@ class IntMultiHash<T> {
 		}
 	}
 	
-	inline public function push(key : Int, value : T) : Void
+	public function push(key : Int, value : T) : Void
 	{
 		if (exists(key))
 			_hash.get(key).push(value);
@@ -111,7 +115,7 @@ class IntMultiHash<T> {
 		}
 	}
 	
-	inline public function pop(key : Int) : Null<T>
+	public function pop(key : Int) : Null<T>
 	{
 		if (exists(key))
 			return _hash.get(key).pop();
@@ -136,7 +140,7 @@ class IntMultiHash<T> {
 		return Std.string( _hash );
 	
 	// Version of groupByHash from http://haxe.org/doc/snip/groupbyhash
-	public static function groupByHash<T>(it : Iterable<T>, ?transformer : T -> Int) : IntMultiHash<T>
+	public static function groupByHash<T2>(it : Iterable<T2>, ?transformer : T2 -> Int) : IntMultiHash<T2>
 	{
 		if (transformer == null)
 			transformer = function(x) { return Std.int(cast(x, Float)); }
